@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-10-20
 * Last updated for version 1.0.0
-* Last updated on  2016-11-21
+* Last updated on  2016-11-23
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -124,7 +124,7 @@ QP::QState Transmitor::serving(Transmitor * const me,
         QP::QEvt const * const e)
 {
 }
-/*$ Transmitor::serving_e()................................................*/
+/*$ Transmitor::serving_e().................................................*/
 QP::QState Transmitor::serving_e(Transmitor * const me) {
 
 }

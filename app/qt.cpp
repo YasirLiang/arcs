@@ -43,7 +43,7 @@ void* QtCmd_queryId(struct TCmdQElem *pElem) {
         reqId = ARCS::Controller_getNextReqId();
         pi = Inflight_nodeCreate(buf.seq, cmd,
             bufLen, reqId, ARCS::NOTIFY_FLAG,
-            (uint32_t)100, (uint32_t)3, (uint8_t*)buf)
+            (uint32_t)100, (uint32_t)3, (uint8_t*)buf);
         if (pi != (TInflightCmd_pNode)0) {
             Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
             QP::QF::PUBLISH(Q_NEW(ARCS::TransmitEvt,

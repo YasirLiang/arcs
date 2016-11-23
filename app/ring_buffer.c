@@ -31,12 +31,12 @@ void RingBuffer_initial(TCharRingBuf *rBuf,
 /*$ RingBuffer::isFull()....................................................*/
 bool RingBuffer_isFull(TCharRingBuf *rBuf) {
     bool bret = (bool)0;;
-    if (TCharRingBuf == (TCharRingBuf *)0) {
+    if (rBuf == (TCharRingBuf *)0) {
         return (bool)0;
     }
     /* test condition */
-    if ((!TCharRingBuf->empty)
-          && (TCharRingBuf->head == TCharRingBuf->trail))
+    if ((!rBuf->empty)
+          && (rBuf->head == rBuf->trail))
     {
         bret = (bool)1;
     }
@@ -46,7 +46,7 @@ bool RingBuffer_isFull(TCharRingBuf *rBuf) {
 /*$ RingBuffer::saveChar()..................................................*/
 bool RingBuffer_saveChar(TCharRingBuf *rBuf, uint8_t saveCh) {
     bool bret = (bool)0;
-    if (TCharRingBuf == (TCharRingBuf *)0) {
+    if (rBuf == (TCharRingBuf *)0) {
         return (bool)0;
     }
     /* save condition satisfied ?*/
@@ -68,7 +68,7 @@ bool RingBuffer_saveChar(TCharRingBuf *rBuf, uint8_t saveCh) {
 /*$ RingBuffer::getChar()...................................................*/
 bool RingBuffer_getChar(TCharRingBuf *rBuf, uint8_t *pGetCh) {
     bool bret = (bool)0;
-    if ((TCharRingBuf == (TCharRingBuf *)0)
+    if ((rBuf == (TCharRingBuf *)0)
           || (pGetCh == (uint8_t *)0))
     {
         return (bool)0;

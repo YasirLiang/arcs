@@ -78,3 +78,4 @@ void CmdQueue_nodeDestroy(TPCmdQueueNode *tg) {
 void* Cmd_run(TPCmdQueueNode instance)  {
     return (void *)instance->elem.run(&instance->elem);
 }
+

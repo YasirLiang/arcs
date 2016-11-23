@@ -20,7 +20,7 @@
 #define __COMMAND_H__
 /*! make a destinction between c and c++ file */
 #ifdef __cplusplus /* only define in .cpp file */
-    extern "C" { /*! for c++ file transfer c function */
+    extern "C" {   /*! for c++ file transfer c function */
 #endif /* __cplusplus */
 /*! enumration commander type */
 typedef enum TECmdType {
@@ -29,39 +29,39 @@ typedef enum TECmdType {
 }TECmdType;
 /*! enumration user type */
 typedef enum TECmdUser {
-    QT_USER, /*! qt surface user Command */
-    SERVER_USER, /*! only using bewteen ARCS and server */
-    MENU_USER, /*! menu surface user Command */
-    CMPT_USER, /*! upper computer operation */
-    CMD_USER, /*! command line Command */
+    QT_USER,       /*! qt surface user Command */
+    SERVER_USER,   /*! only using bewteen ARCS and server */
+    MENU_USER,     /*! menu surface user Command */
+    CMPT_USER,     /*! upper computer operation */
+    CMD_USER,      /*! command line Command */
     TERMINAL_USER, /*! terminal Command */
-    SYSTEM_USER /*! system user */
+    SYSTEM_USER    /*! system user */
 }TECmdUser;
 /*! enumration command status */
 typedef enum TECmdStatus {
-    EXEC_SUCCESS = 0, /*! Only for all request excute success */
-    NO_START,         /*! no start  */
-    EXEC_PAUSE,       /*! pause by user */
-    USER_TERMINATE,   /*! terminate by user */
-    COMMAND_EXECUTING,/*! command excuting while no request */
-    REQUEST_EXECUTING /*! attribution request Executing */
+    EXEC_SUCCESS = 0,  /*! Only for all request excute success */
+    NO_START,          /*! no start  */
+    EXEC_PAUSE,        /*! pause by user */
+    USER_TERMINATE,    /*! terminate by user */
+    COMMAND_EXECUTING, /*! command excuting while no request */
+    REQUEST_EXECUTING  /*! attribution request Executing */
 }TECmdStatus;
 
 #define USER_PROTOCAL_SIZE 320
 
 /*! user cmd queue element */
 struct TCmdQElem {
-    uint32_t id; /*! local generate id */
-    TECmdType type; /*! type for command */
-    TECmdUser user; /*! user for command */
-    TECmdStatus execStatus; /*! command execute status */
+    uint32_t id;                  /*! local generate id */
+    TECmdType type;               /*! type for command */
+    TECmdUser user;               /*! user for command */
+    TECmdStatus execStatus;       /*! command execute status */
     struct list_head requestHead; /*! requst double link list guard */
     /*! request executable status list, node type is TRStatusNode */
     struct list_head statusList;
     uint16_t cmdBufLen; /*! cmdBufLen for protocal data */
     uint8_t cmdBuf[USER_PROTOCAL_SIZE]; /*! cmd buffer for protocal */
     /*! command run specific function, return new request,
-        zero mean return nothing*/
+        zero mean return nothing */
     void* (*run)(struct TCmdQElem *pElem);
 }TCmdQElem;
 
@@ -72,8 +72,8 @@ typedef struct TCmdQueueNode {
 }TCmdQueueNode, *TPCmdQueueNode;
 /*! cmd queue define as user using */
 struct TCmdQueue {
-    TQueue queue; /*! queue element */
-    int queueSize; /*! queue max size */
+    TQueue queue;   /*! queue element */
+    int queueSize;  /*! queue max size */
     int queueCount; /*! queue count number */
     /* other queue element deration can be hear, such as control data */
 };
