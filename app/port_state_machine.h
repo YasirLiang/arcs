@@ -23,8 +23,13 @@ namespace ARCS {
 
 class PortStateMachine : public  QP::QMsm {
 private:
-    /*! extern port virtual table */
+    #define PORT_BUF_SIZE 1536
+    /*! Extern port virtual table */
     TExternPortVtbl const *vptr;
+    /*! Recieve Buffer */
+    uint8_t recvBuf[PORT_BUF_SIZE];
+    /*! ring buffer pointer of Port */
+    TCharRingBuf *pRingBuf;
 public:
     PortStateMachine();
 protected:

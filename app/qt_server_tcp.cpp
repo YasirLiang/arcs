@@ -120,11 +120,15 @@ int QtTcpSocket::recv_s(void * const buf, int bufSize) {
             tcpClient.read(datagram.data(), datagram.size());
             memcpy((char * const)buf, datagram.data, reLen);
         }
+        else {
+            /* set error return */
+            reLen = -1;
+        }
         /* release buffer */
         datagram.resize(0);
     }
     /* Error return */
-    return -1;
+    return reLen;
 }
 /*$ specific Extern port destroy function...................................*/
 int QtTcpSocket::destroy_s(void) {

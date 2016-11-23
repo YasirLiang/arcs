@@ -47,14 +47,44 @@ QP::GuiQMActive A0_Transmitor = &l_transmitor;
 Transmitor::Transmitor()
     : GuiQMActive(Q_STATE_CAST(&Transmitor::initial))
 {
-    /* get port state machine msm */
+    if (!initialRecvBufList()) {
+        Q_ASSERT(0); /* assert failed */
+    }
+    /* set information */
     for (uin8_t i = 0; i < EXTERN_PORT_NUM; ++i) {
-        /* set msm */
+        /* initial ring buffer */
+        RingBuffer_initial(&ringBuf[i],
+            recvBuf[i].bufSize, recvBuf[i].pBuf);
+        /* set StateMachine ring buffer,
+            ring buffer must be initial */
+        PortStateMachine_setRingBuf(&ringBuf[i], i);
+        /* get port state machine msm */
         port[i] = PortStateMachine_getIns(i);
     }
+    
     /* set port state machine virtual table */
     PortStateMachine_setPortVtbl(QtTcpSocket_getVtbl(),
             QT_SV_EP);
+}
+/*$ Transmitor::active()....................................................*/
+bool Transmitor::initialRecvBufList(void) {
+    /* new space and initial
+        for transmitor port recv buffer list */
+    uint8_t *ptr;
+    bool bret = (bool)0;
+    /* for qt port transmitor recv buffer */
+    ptr = (uint8_t *)malloc(QT_ET_RECV_BUF_SIZE);
+    if (ptr != (uint8_t *0)) {
+        recvBuf[QT_SV_EP].pBuf = ptr;
+        recvBuf[QT_SV_EP].bufSize = QT_ET_RECV_BUF_SIZE;
+        bret = (bool)1;
+    }
+    /* initial other recv buffer */
+    if (bret) {
+
+    }
+    /* return successfully flag */
+    return bret;
 }
 /*$ Transmitor::active()....................................................*/
 QP::QState Transmitor::active(Transmitor * const me,
@@ -81,6 +111,7 @@ QP::QState Transmitor::initial(Transmitor * const me,
             Q_ACTION_CAST(0)/* zero terminator */
         }
     };
+
     /* initial port state machine msm */
     for (uin8_t i = 0; i < EXTERN_PORT_NUM; ++i) {
         port[i]->init();

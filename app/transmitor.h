@@ -23,8 +23,19 @@ namespace ARCS {
 
 class Transmitor : public QP::GuiQMActive {
 private:
-    QP::QMsm *port[EXTERN_PORT_NUM]; /*! port state machine */
-    /* recv buffer 1...n */
+    /*! qt extern port recv buffer size */
+    #define QT_ET_RECV_BUF_SIZE 1024
+    /*! Transmit Recieve Buffer type */
+    typedef struct TRecieveBuf {
+        uint8_t *pBuf;
+        int bufSize;
+    }TRecieveBuf;
+    /*! port state machine */
+    QP::QMsm *port[EXTERN_PORT_NUM];
+    /* recv ring buffer for all port */
+    TCharRingBuf ringBuf[EXTERN_PORT_NUM];
+    /* recieve buffer for port */
+    TRecieveBuf recvBuf[EXTERN_PORT_NUM];
 protected:
     static QP::QState active(Transmitor * const me);
     static QP::QState initial(Transmitor * const me,

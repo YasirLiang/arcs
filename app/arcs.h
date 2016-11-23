@@ -88,7 +88,7 @@ enum TEnumQStatus {
 
 /*! enumration of system port */
 enum {
-    QT_SV_EP = 0, /*! qt server external port */
+    QT_SV_EP = 0,      /*! qt server external port */
     EXTERN_PORT_NUM    /*! external port number */
 };
 
@@ -256,6 +256,10 @@ public:
     }
 };
 
+}/* namespace ARCS */
+
+namespace ARCS {
+
 QP::QMsm *Requestor_getMsm(void);
 QP::QMsm *Commander_getMsm(void);
 struct list_head * Controller_getQtInflight(void);
@@ -267,7 +271,19 @@ void Commander_updateCurrentReq(uint32_t req);
 QP::QMsm* PortStateMachine_getIns(uint8_t id);
 void PortStateMachine_setPortVtbl(TExternPortVtbl *ptr,
     uin8_t id);
-}/* namespace ARCS */
+void PortStateMachine_setRingBuf(TCharRingBuf *pRingBuf,
+    uin8_t id);
+} /* namespace ARCS */
+
+namespace ARCS {
+
+/*! set zero memory define */
+#define MZR(pos, size) \
+do {\
+    memset(pos, 0, size);\
+} while(0)
+
+} /* namespace ARCS */
 
 #endif /*__ARCS_H__*/
 
