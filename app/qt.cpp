@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-11-11
 * Last updated for version 1.0.0
-* Last updated on  2016-11-14
+* Last updated on  2016-11-24
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -173,7 +173,6 @@ void* QtCmd_setLocalSys(struct TCmdQElem *pElem) {
     uint32_t cmd, reqId;
     uint32_t req;
     uint16_t bufLen;
-    TProtocalQt buf;
     /* assert 'NULL' pointer error */
     Q_ASSERT(pElem != (struct TCmdQElem *)0);
     if (l_curCmd != cmd) {/* first run this command */
@@ -183,8 +182,9 @@ void* QtCmd_setLocalSys(struct TCmdQElem *pElem) {
                 /* change password, this is not finished(20161121)*/
             }
             else if ((pElem->cmdBuf[0] & 0x7f) == 4) {/* change port */
+                bufLen = pElem->cmdBuf[1];
                 QP::QF::PUBLISH(Q_NEW(ARCS::PortChangeEvt,
-                ARCS::QT_PORT, bufLen, (uint8_t *)buf), (void*)0);
+                ARCS::QT_PORT, bufLen, pElem->cmdBuf + 2), (void*)0);
             }
             else {
                 /* no need */

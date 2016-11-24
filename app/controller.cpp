@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-11-1
 * Last updated for version 1.0.0
-* Last updated on  2016-11-11
+* Last updated on  2016-11-24
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -42,9 +42,18 @@ QP::QMState const Controller::serving_s = {
 static Controller l_contoller;
 /*Global variable-----------------------------------------------------------*/
 QP::GuiQMActive A0_Controller = &l_contoller;
+/*$ Controller::getQtInflight().............................................*/
+struct list_head * Controller_getQtInflight(void) {
+    return &l_contoller.inflight[QT_INFLIGHT];
+}
+/*$ Controller::getNextReqId()..............................................*/
+uint32_t Controller_getNextReqId(void) {
+    return ++l_contoller.requstId;
+}
 /*$ Controller::Controller()................................................*/
 Controller::Controller()
     : GuiQMActive(Q_STATE_CAST(&Controller::initial))
+      m_timeEvt(this, TICK_1MS_SIG, 0U)
 {
     /* get commander msm */
     commander = Commander_getMsm();
@@ -61,6 +70,9 @@ QP::QState Controller::active(Controller * const me,
     QP::QState status_;
     switch (e->sig) {
         case TICK_1MS_SIG: {
+            /*1\ looking for inflight list and proccess timeout
+                  node */
+            timeTick_();
             status_ = QM_HANDLE();
             break;
         }
@@ -68,15 +80,6 @@ QP::QState Controller::active(Controller * const me,
             break;
         }
     }
-}
-struct list_head * Controller_getQtInflight(void) {
-    return &l_contoller.inflight[QT_INFLIGHT];
-}
-uint32_t Controller_getNextReqId(void) {
-    return ++l_contoller.requstId;
-}
-uint32_t Controller::getNextCmd(void) {
-    return ++cmdId;
 }
 /*$ Controller::active()....................................................*/
 QP::QState Controller::initial(Controller * const me,
@@ -187,11 +190,17 @@ QP::QState Controller::serving(Controller * const me,
 }
 /*$ Controller::serving_e()................................................*/
 QP::QState Controller::serving_e(Controller * const me) {
-
+    me->m_timeEvt.postIn(me, (QP::QTimeEvtCtr)1);
+    return QM_ENTRY(&serving_s);
 }
 /*$ Controller::serving_x().................................................*/
 QP::QState Controller::serving_x(Controller * const me) {
-
+    me->m_timeEvt.disarm();
+    return QM_EXIT(&serving_s);
+}
+/*$ Controller::getNextCmd()................................................*/
+uint32_t Controller::getNextCmd(void) {
+    return ++lcmdId;
 }
 /*$ Controller::serverDataHandle()..........................................*/
 int Controller::serverDataHandle(uint8_t const * const rxBuf,
@@ -304,7 +313,7 @@ void Controller::rxPacketEvent(TExternPort port,
         }
     }
 }
-/**/
+/*$ Controller::handleServerCmd.............................................*/
 void Controller::handleServerCmd(uint8_t const * const rxBuf,
     uint16_t const rxLen)
 {
@@ -359,12 +368,112 @@ void Controller::handleServerCmd(uint8_t const * const rxBuf,
         }
     }
 }
+/*$ Controller::tickQtInflight()............................................*/
+void Controller::tickQtInflight(void) {
+    TInflightCmd_pNode pos, n, p;
+    TPCmdQueueNode pCurCmd;
+    TPRequestNode pCurReq;
+    uint32_t wkCmdId, reState;
+    uint32_t notifyId;
+    bool matchCmd;
+    bool reqDone;
+    struct list_head *reList;
+    list_for_each_entry_safe(pos, n, &inflight[QT_INFLIGHT], list) {
+        if (Inflight_timeout(pos)) {
+            if (Inflight_retried(pos)) {
+                /* get some information before destroy */
+                wkCmdId = pos->cmdId;
+                notifyId = pos->cmdNotificationId;
+                /* message timeout log */
+                qDebug("[TIMEOUT %d, %d, %d, %d, %d]",
+                    QT_INFLIGHT, pos->cmdSeqId,
+                    pos->cmdId, pos->cmdNotificationId,
+                    ((TProtocalQt*)pos->pBuf)->cmd);
+                /* destroy */
+                Inflight_nodeDestroy(&pos);
+                /* match command id? */
+                if (Commander_matchCmdId(wkCmdId, &pCurCmd)) {
+                    matchCmd = (bool)1;
+                }
+                /* looking for request node,
+                     and set to its executing status */
+                if (matchCmd) { /* match ?*/
+                    /* search executing request */
+                    pCurReq = (TPRequestNode)0;
+                    pCurReq = RequestList_searchNode(&pCurCmd->elem.requestHead,
+                        notifyId);
+                    /* current request executing ?*/
+                    if (pCurReq != (TPRequestNode)0) {
+                        /* set current running request status */
+                        reList = &pCurReq->in->statusList;
+                    }
+                    else {
+                        /* set current running command status */
+                        reList = &pCurCmd->elem.statusList;
+                    }
+                    /* save reponse to status to list (command or request) */
+                    Request_saveStatusToList(INFLIGHT_HD, QT_PTC,
+                            0, QTIMEOUT, reList);/* set request status */
+                }
+                /* look for each inflight list, if no such inflight node,
+                     send request signal to */
+                reqDone = (bool)1;
+                for (int i = 0; i < INFLIGHT_NUM; i++) {
+                    p = Inflight_searchReq(&inflight[i],
+                        notifyId);
+                    if (p != (TInflightCmd_pNode)0) {/*found?*/
+                        reqDone = (bool)0;
+                        break;
+                    }
+                }
+                /* match cmd done? */
+                if (matchCmd) {
+                    if (reqDone) {/* and request done? */
+                        /* send request done sig to commander */
+                        RequestDoneEvt e(notifyId);
+                        commander->dispatch(&e);
+                    }
+                }
+                pCurReq = (TPRequestNode)0;
+                pCurCmd = (TPCmdQueueNode)0;
+            }
+            else { /* resend data */
+                QP::QF::PUBLISH(Q_NEW(ARCS::TransmitEvt,
+                        ARCS::QT_PORT, pos->dataLen, pos->pBuf),
+                    (void*)0);
+                Inflight_increaseSendCnt(pos);
+                qDebug("[ReSend %d, %d, %d, %d, %d]",
+                    QT_INFLIGHT, pos->cmdSeqId,
+                    pos->cmdId, pos->cmdNotificationId,
+                    ((TProtocalQt*)pos->pBuf)->cmd);
+            }
+        }
+    }
+}
+/*$ Controller::timeTick_().................................................*/
+void Controller::timeTick_(void) {
+    tickQtInflight();
+}
 /*$ Controller::callbackQt()................................................*/
 void Controller::callbackQt(uint32_t cmdId, uint32_t notifyId,
     uint32_t notifyFlag, uint8_t const * const rxBuf, uint16_t const rxLen)
 {
     TProtocalQt *buf = (TProtocalQt *)rxBuf;
+    uint32_t reState;
     /* log callback */
+    if (notifyFlag == NOTIFY_FLAG) {
+        /* set reponse state */
+        if (buf->type & PRO_ERR_MASK) {
+            reState = QHOST_SHIELDED;
+        }
+        else {
+            reState = QSUCCESS;
+        }
+        qDebug("[QT RESPONSE %d(cmd), %d(seq),"
+            "%d(datalen), %d(respflag)]",
+            buf->cmd, buf->seq,
+            buf->dataLen, reState);
+    }
 }
 
 }

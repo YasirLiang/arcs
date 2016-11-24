@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-11-23
 * Last updated for version 1.0.0
-* Last updated on  2016-11-23
+* Last updated on  2016-11-24
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -24,8 +24,8 @@ void RingBuffer_initial(TCharRingBuf *rBuf,
 {
     rBuf->empty = (bool)1;
     rBuf->bufSize = size;
-    rBuf->head = (uint16_t)0;
-    rBuf->trail = (uint16_t)0;
+    rBuf->head = (uint32_t)0;
+    rBuf->trail = (uint32_t)0;
     rBuf->pBuf = pBuf;
 }
 /*$ RingBuffer::isFull()....................................................*/

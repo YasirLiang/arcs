@@ -1,12 +1,12 @@
 /*
 * @file port_state_machine.cpp
 * @brief port state machine
-* @ingroup port state machine
+* @ingroup port state machine basing on send queue
 * @cond
 ******************************************************************************
 * Build Date on  2016-11-22
 * Last updated for version 1.0.0
-* Last updated on  2016-11-23
+* Last updated on  2016-11-24
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -21,65 +21,65 @@
 namespace ARCS {
 
 /*$ Local variable decleration..............................................*/
-PortStateMachine l_portStateMachine[EXTERN_PORT_NUM];
+static PortMsgStateMachine l_portStateMachine[EXTERN_PORT_NUM];
 
 /*$ state machine get instance..............................................*/
-QP::QMsm* PortStateMachine_getIns(uint8_t id) {
+QP::QMsm* PortMsgStateMachine_getIns(uint8_t id) {
     Q_ASSERT(id < EXTERN_PORT_NUM);
     return &l_portStateMachine[id];
 }
 /*$ state machine set new port..............................................*/
-void PortStateMachine_setPortVtbl(TExternPortVtbl *ptr,
+void PortMsgStateMachine_setPortVtbl(TExternPortVtbl *ptr,
     uin8_t id)
 {
     Q_ASSERT(id < EXTERN_PORT_NUM);
     l_portStateMachine[id].vptr = ptr;
 }
 /*$ state machine set ring buffer...........................................*/
-void PortStateMachine_setRingBuf(TCharRingBuf *pRingBuf,
+void PortMsgStateMachine_setRingBuf(TCharRingBuf *pRingBuf,
     uin8_t id)
 {
     Q_ASSERT(id < EXTERN_PORT_NUM);
     l_portStateMachine[id].pRingBuf = pRingBuf;
 }
 /*$ Local variable decleration..............................................*/
-QP::QMState const PortStateMachine::active_s = {
+QP::QMState const PortMsgStateMachine::active_s = {
     static_cast<QP::QMState const *>(0), /* superstate (top)*/
     Q_STATE_CAST(&active), /* state handle */
     Q_ACTION_CAST(0), /* entry action */
     Q_ACTION_CAST(0), /* exit action */
     Q_ACTION_CAST(0) /* initial action */
 };
-QP::QMState const PortStateMachine::sending_s = {
-    &PortStateMachine::active_s, /* superstate (top) */
+QP::QMState const PortMsgStateMachine::sending_s = {
+    &PortMsgStateMachine::active_s, /* superstate (top) */
     Q_STATE_CAST(&sending), /* state handle */
     Q_STATE_CAST(&sending_e), /* entry action */
     Q_STATE_CAST(&sending_x), /* exit action */
     Q_STATE_CAST(0) /* initial action */
 };
-QP::QMState const PortStateMachine::idle_s = {
-    &PortStateMachine::active_s,, /* superstate (top) */
+QP::QMState const PortMsgStateMachine::idle_s = {
+    &PortMsgStateMachine::active_s,, /* superstate (top) */
     Q_STATE_CAST(&idle), /* state handle */
     Q_STATE_CAST(&idle_e), /* entry action */
     Q_STATE_CAST(&idle_x), /* exit action */
     Q_STATE_CAST(0) /* initial action */
 };
-QP::QMState const PortStateMachine::wait_s = {
-    &PortStateMachine::active_s,, /* superstate (top) */
+QP::QMState const PortMsgStateMachine::wait_s = {
+    &PortMsgStateMachine::active_s,, /* superstate (top) */
     Q_STATE_CAST(&wait), /* state handle */
     Q_STATE_CAST(&wait_e), /* entry action */
     Q_STATE_CAST(&wait_x), /* exit action */
     Q_STATE_CAST(0) /* initial action */
 };
-/*$ PortStateMachine::PortStateMachine()....................................*/
-PortStateMachine::PortStateMachine(void)
-  :  QMsm(Q_STATE_CAST(&PortStateMachine::initial))
+/*$ PortMsgStateMachine::PortMsgStateMachine()..............................*/
+PortMsgStateMachine::PortMsgStateMachine(void)
+  :  QMsm(Q_STATE_CAST(&PortMsgStateMachine::initial))
 {
     vptr = (TExternPortVtbl *)0;
     pRingBuf = (TCharRingBuf *)0;
 }
-/*$ PortStateMachine::active()..............................................*/
-QP::QState PortStateMachine::active(PortStateMachine * const me,
+/*$ PortMsgStateMachine::active()...........................................*/
+QP::QState PortMsgStateMachine::active(PortMsgStateMachine * const me,
     QP::QEvt const * const e)
 {
     QP::QState status_;
@@ -107,8 +107,8 @@ QP::QState PortStateMachine::active(PortStateMachine * const me,
     /* return status */
     return status_;
 }
-/*$ PortStateMachine::initial().............................................*/
-QP::QState PortStateMachine::initial(PortStateMachine * const me,
+/*$ PortMsgStateMachine::initial()..........................................*/
+QP::QState PortMsgStateMachine::initial(PortMsgStateMachine * const me,
     QP::QEvt const * const e)
 {
     static QP::QMTranActTable const table_ = {/* transition-action table */
@@ -122,8 +122,8 @@ QP::QState PortStateMachine::initial(PortStateMachine * const me,
     /* tran state table */
     return QM_TRAN_INIT(&table_);
 }
-/*$ PortStateMachine::sending().............................................*/
-QP::QState PortStateMachine::sending(PortStateMachine * const me,
+/*$ PortMsgStateMachine::sending()..........................................*/
+QP::QState PortMsgStateMachine::sending(PortMsgStateMachine * const me,
     QP::QEvt const * const e)
 {
     QP::QState status_;
@@ -140,16 +140,16 @@ QP::QState PortStateMachine::sending(PortStateMachine * const me,
     /* return status */
     return status_;
 }
-/*$ PortStateMachine::sending_e()...........................................*/
-QP::QState PortStateMachine::sending_e(PortStateMachine * const me) {
+/*$ PortMsgStateMachine::sending_e()........................................*/
+QP::QState PortMsgStateMachine::sending_e(PortMsgStateMachine * const me) {
 
 }
-/*$ PortStateMachine::sending_x()...........................................*/
-QP::QState PortStateMachine::sending_x(PortStateMachine * const me) {
+/*$ PortMsgStateMachine::sending_x()........................................*/
+QP::QState PortMsgStateMachine::sending_x(PortMsgStateMachine * const me) {
 
 }
-/*$ PortStateMachine::idle()................................................*/
-QP::QState PortStateMachine::idle(PortStateMachine * const me,
+/*$ PortMsgStateMachine::idle().............................................*/
+QP::QState PortMsgStateMachine::idle(PortMsgStateMachine * const me,
     QP::QEvt const * const e)
 {
     QP::QState status_;
@@ -166,16 +166,16 @@ QP::QState PortStateMachine::idle(PortStateMachine * const me,
     /* return status */
     return status_;
 }
-/*$ PortStateMachine::idle_e()..............................................*/
-QP::QState PortStateMachine::idle_e(PortStateMachine * const me) {
+/*$ PortMsgStateMachine::idle_e()...........................................*/
+QP::QState PortMsgStateMachine::idle_e(PortMsgStateMachine * const me) {
 
 }
-/*$ PortStateMachine::idle_x()..............................................*/
-QP::QState PortStateMachine::idle_x(PortStateMachine *const me) {
+/*$ PortMsgStateMachine::idle_x()...........................................*/
+QP::QState PortMsgStateMachine::idle_x(PortMsgStateMachine *const me) {
 
 }
-/*$ PortStateMachine::wait()................................................*/
-QP::QState PortStateMachine::wait(PortStateMachine * const me,
+/*$ PortMsgStateMachine::wait().............................................*/
+QP::QState PortMsgStateMachine::wait(PortMsgStateMachine * const me,
     QP::QEvt const * const me)
 {
     QP::QState status_;
@@ -192,12 +192,12 @@ QP::QState PortStateMachine::wait(PortStateMachine * const me,
     /* return status */
     return status_;
 }
-/*$ PortStateMachine::wait_e()..............................................*/
-QP::QState PortStateMachine::wait_e(PortStateMachine * const me) {
+/*$ PortMsgStateMachine::wait_e()...........................................*/
+QP::QState PortMsgStateMachine::wait_e(PortMsgStateMachine * const me) {
 
 }
-/*$ PortStateMachine::wait_x()..............................................*/
-QP::QState PortStateMachine::wait_x(PortStateMachine * const me) {
+/*$ PortMsgStateMachine::wait_x()...........................................*/
+QP::QState PortMsgStateMachine::wait_x(PortMsgStateMachine * const me) {
 
 }
 

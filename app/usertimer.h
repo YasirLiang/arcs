@@ -33,9 +33,9 @@ typedef struct TUserTimer {
     extern "C" {
 #endif /* __cplusplus */
 
-extern void userTimerstart(uint32_t duration_ms, TUserTimer *timer);
-extern void userTimerstop(TUserTimer *timer);
-extern bool userTimertimeout(TUserTimer *timer);
+extern void userTimerStart(uint32_t duration_ms, TUserTimer *timer);
+extern void userTimerStop(TUserTimer *timer);
+extern bool userTimerTimeout(TUserTimer *timer);
 
 #ifdef __cplusplus
 } /*end extern "C" */

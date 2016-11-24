@@ -36,7 +36,7 @@ TInflightCmdNode * Inflight_nodeCreate(uint16_t seqId, uint32_t cmdId,
         pNode->cmdTimeoutMs = timeoutMs;
         pNode->cntTime = cntTime;
         pNode->dataLen = dataLen;
-        pNode->timerCnt = (uint32_t)0;
+        pNode->timerCnt = (uint32_t)1; /* send count */
         pNode->pBuf = (uint8_t *)malloc(dataLen);
         if (pNode->pBuf != (uint8_t *)0) {
             /* copy data */
@@ -94,6 +94,10 @@ bool Inflight_timeout(TInflightCmd_pNode const pNode) {
 /*! Inflight_retried........................................................*/
 bool Inflight_retried(TInflightCmd_pNode const pNode) {
     return (pNode->timerCnt >= pNode->cntTime);
+}
+/*! Inflight_retried........................................................*/
+bool Inflight_increaseSendCnt(TInflightCmd_pNode const pNode) {
+    return pNode->timerCnt++;
 }
 /*! Inflight_searchSeq......................................................*/
 TInflightCmd_pNode Inflight_searchSeq(struct list_head *head, uint16_t seq) {

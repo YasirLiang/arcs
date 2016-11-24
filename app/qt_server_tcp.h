@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-11-22
 * Last updated for version 1.0.0
-* Last updated on  2016-11-22
+* Last updated on  2016-11-24
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -38,3 +38,4 @@ protected:
 };
 
 #endif /* __QT_SERVER_TCP_H__ */
+

@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build date on  2016-11-1
 * Last updated for version 1.0.0
-* Last updated on  2016-11-1
+* Last updated on  2016-11-24
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -20,6 +20,7 @@
 
 namespace ARCS {
 
+/*$ Local varailable--------------------------------------------------------*/
 static Requestor l_rAct;
 
 QP::QMState const Requestor::active_s = {
@@ -45,17 +46,17 @@ QP::QMState const Requestor::idle_s = {
     Q_ACTION_CAST(&idle_x),/* exit action */
     Q_ACTION_CAST(0) /* no initial action */
 };
-/*Requestor()...............................................................*/
+/*get request instance......................................................*/
+QP::QMsm *Requestor_getMsm(void) {
+    return &l_rAct;
+}
+/*$ Requestor().............................................................*/
 Requestor::Requestor()
   : QMsm(Q_STATE_CAST(&Requestor::initial)))
 {
     curReqElem = (TRequestElem *)0;
 }
-/*get request instance......................................................*/
-QP::QMsm *Requestor_getMsm(void) {
-    return &l_rAct;
-}
-/*initial().......................................................*/
+/*$ initial()...............................................................*/
 QP::State Requestor::initial(Requestor * const me,
         QP::QEvt const * const e)
 {
@@ -67,7 +68,7 @@ QP::State Requestor::initial(Requestor * const me,
     };
     return QM_TRAN_INIT(&tatbl_);
 }
-/*active()..................................................................*/
+/*$ active()................................................................*/
 QP::QState Requestor::active(Requestor * const me,
         QP::QEvt const * const e)
 {
@@ -101,14 +102,15 @@ QP::QState Requestor::active(Requestor * const me,
     }
     return status_;
 }
-/*active_e()................................................................*/
+/*$ active_e()..............................................................*/
 QP::QState Requestor::active_e(Requestor * const me) {
-}
-/*active_x()................................................................*/
-QP::QState Requestor::active_x(Requestor * const me) {
     return QM_ENTRY(&idle_s);
 }
-/*idle()....................................................................*/
+/*$ active_x()..............................................................*/
+QP::QState Requestor::active_x(Requestor * const me) {
+    return QM_EXIT(&idle_s);
+}
+/*$ idle()..................................................................*/
 QP::State Requestor::idle(Requestor * const me,
     QP::QEvt const * const e)
 {
@@ -135,11 +137,15 @@ QP::State Requestor::idle(Requestor * const me,
     }
     return status_;
 }
-/*idle_e()..................................................................*/
+/*$ idle_e()................................................................*/
 QP::State Requestor::idle_e(Requestor * const me) {
-
+    return QM_ENTRY(&idle_s);
 }
-/*serving().................................................................*/
+/*$ idle_x()................................................................*/
+QP::State Requestor::idle_x(Requestor * const me) {
+    return QM_EXIT(&idle_s);
+}
+/*$ serving()...............................................................*/
 QP::State Requestor::serving(Requestor * const me,
     QP::QEvt const * const e)
 {

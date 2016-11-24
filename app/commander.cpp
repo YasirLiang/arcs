@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build date on  2016-10-20
 * Last updated for version 1.0.0
-* Last updated on  2016-11-18
+* Last updated on  2016-11-24
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -219,6 +219,7 @@ QP::QState Commander::active(Commander * const me,
 }
 /*active_e()................................................................*/
 QP::QState Commander::active_e(Commander * const me) {
+    return QM_ENTRY(&active_s);
 }
 /*active_x()................................................................*/
 QP::QState Commander::active_x(Commander * const me) {
@@ -319,11 +320,11 @@ QP::State Commander::idle(Commander * const me,
 }
 /*idle_e()..................................................................*/
 QP::State Commander::idle_e(Commander * const me) {
-
+    return QM_ENTRY(&idle_s);
 }
 /*idle_x()..................................................................*/
 QP::State Commander::idle_x(Commander * const me) {
-
+    return QM_EXIT(&idle_s);
 }
 /*serving().................................................................*/
 QP::State Commander::serving(Commander * const me,

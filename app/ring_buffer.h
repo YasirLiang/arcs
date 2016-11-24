@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-11-23
 * Last updated for version 1.0.0
-* Last updated on  2016-11-23
+* Last updated on  2016-11-24
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -27,8 +27,8 @@ typedef struct TCharRingBuf
 {
 	bool empty;         /*! ring buffer empty flags */
 	uint8_t *pBuf; /*! ring buffer pointer */
-	uint16_t head;      /*! the head of ring buffer */
-	uint16_t trail;     /*! the trail of ring buffer */
+	uint32_t head;      /*! the head of ring buffer */
+	uint32_t trail;     /*! the trail of ring buffer */
 	uint32_t bufSize;  /*! the size of ring buffer */
 }TCharRingBuf;
 /*! RingBuffer_initial------------------------------------------------------*/

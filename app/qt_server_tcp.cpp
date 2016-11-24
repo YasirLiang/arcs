@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-11-22
 * Last updated for version 1.0.0
-* Last updated on  2016-11-22
+* Last updated on  2016-11-24
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -100,6 +100,7 @@ void QtTcpSocket::init_s(void) {
 }
 /*$ specific Extern port send function......................................*/
 int QtTcpSocket::send_s(void const * const buf, int sendLen) {
+    int ret = -1;
     if (avail) {
         datagram.resize(sendLen);
         memcpy(datagram.data(),
@@ -108,7 +109,9 @@ int QtTcpSocket::send_s(void const * const buf, int sendLen) {
             datagram.size());
         /* release buffer */
         datagram.resize(0);
+        ret = sendLen;
     }
+    return ret;
 }
 /*$ specific Extern port recv function......................................*/
 int QtTcpSocket::recv_s(void * const buf, int bufSize) {

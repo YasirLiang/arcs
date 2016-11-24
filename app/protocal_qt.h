@@ -101,4 +101,5 @@ typedef struct TProtocalQtQueryData {
 } /* end extern "C" */
 #endif /* __cplusplus */
 
-#endif
+#endif /* __PROTOCAL_QT_H__ */
+

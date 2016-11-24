@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-10-25
 * Last updated for version 1.0.0
-* Last updated on  2016-10-25
+* Last updated on  2016-11-24
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -33,7 +33,7 @@ typedef struct TInflightCmdNode {
     uint32_t cmdNotificationId;/*! notification id */
     uint32_t cmdNotificationFlag;/*! notification flag */
     uint32_t cmdTimeoutMs;/*! timeout ms */
-    uint32_t timerCnt; /*! count for  timeout */
+    uint32_t timerCnt; /*! count for  timeout = send count */
     uint32_t cntTime; /*! count times */
     uint8_t *pBuf;/*! send buffer lenght */
     TUserTimer timer; /*! timer for inflight node */

@@ -260,6 +260,14 @@ public:
 
 namespace ARCS {
 
+/*#define MSG_QUEUE_PSM*//*! message queue port state machine */
+#ifndef MSG_QUEUE_PSM
+#define INFLIGHT_PSM /* inflight port state machine */
+#endif /* MSG_QUEUE_PSM */
+
+QP::GuiQMActive *A0_Controller;
+QP::GuiQMActive *A0_Transmitor;
+
 QP::QMsm *Requestor_getMsm(void);
 QP::QMsm *Commander_getMsm(void);
 struct list_head * Controller_getQtInflight(void);
@@ -268,11 +276,17 @@ uint32_t Controller_getNextReqId(void);
 bool Commander_matchCmdId(uint32_t cmdId);
 /*! Commander_updateCurrentReq----------------------------------------------*/
 void Commander_updateCurrentReq(uint32_t req);
-QP::QMsm* PortStateMachine_getIns(uint8_t id);
-void PortStateMachine_setPortVtbl(TExternPortVtbl *ptr,
+QP::QMsm* PortMsgStateMachine_getIns(uint8_t id);
+void PortMsgStateMachine_setPortVtbl(TExternPortVtbl *ptr,
     uin8_t id);
-void PortStateMachine_setRingBuf(TCharRingBuf *pRingBuf,
+void PortMsgStateMachine_setRingBuf(TCharRingBuf *pRingBuf,
     uin8_t id);
+QP::QMsm* PortInflightStateMachine_getIns(uint8_t id);
+void PortInflightStateMachine_setPortVtbl(TExternPortVtbl *ptr,
+    uin8_t id);
+void PortInflightStateMachine_setRingBuf(TCharRingBuf *pRingBuf,
+    uin8_t id);
+
 } /* namespace ARCS */
 
 namespace ARCS {

@@ -75,19 +75,19 @@ uint32_t clk_convert_to_ms(Timestamp time_stamp) {
 #endif
 
 /*userTimerstart()..........................................................*/
-void userTimerstart(uint32_t duration_ms, TUserTimer *timer) {
+void userTimerStart(uint32_t duration_ms, TUserTimer *timer) {
     timer->running = true;
     timer->elapsed = false;
     timer->count = duration_ms;
     timer->start_time = clk_monotonic();
 }
 /*userTimerstop()...........................................................*/
-void userTimerstop(TUserTimer *timer) {
+void userTimerStop(TUserTimer *timer) {
     timer->running = false;
     timer->elapsed = false;
 }
 /*userTimertimeout()........................................................*/
-bool userTimertimeout(TUserTimer *timer) {
+bool userTimerTimeout(TUserTimer *timer) {
     if ((timer->running)
          && (!timer->elapsed))
     {

@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build date on  2016-11-1
 * Last updated for version 1.0.0
-* Last updated on  2016-11-1
+* Last updated on  2016-11-14
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -40,6 +40,7 @@ protected:
     static QP::State idle(Requestor * const me,
         QP::QEvt const * const e);
     static QP::State idle_e(Requestor * const me);
+    static QP::State idle_x(Requestor * const me);
     static QP::State initial(Requestor * const me,
         QP::QEvt const * const e);
     static QP::State serving(Requestor * const me,

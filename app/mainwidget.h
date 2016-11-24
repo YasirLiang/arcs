@@ -87,5 +87,5 @@ private slots:
     void idComboBoxValChanged(void);
 };
 
-#endif
+#endif /* __MAIN_WIDGET_H__ */
 

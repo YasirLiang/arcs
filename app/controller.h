@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-11-1
 * Last updated for version 1.0.0
-* Last updated on  2016-11-11
+* Last updated on  2016-11-24
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -31,9 +31,22 @@ private:
     /*! commander QMsm */
     QP::QMsm *commander;
     /*! local command id generate */
-    uint32_t cmdId;
+    uint32_t lcmdId;
     /*! local request id generate */
     uint32_t requstId;
+    /* 1ms time out event */
+    QP::QTimeEvt m_timeEvt;
+    void Controller::timeTick_(void);
+    uint32_t getNextCmd(void);
+    void callbackQt(uint32_t cmdId, uint32_t notifyId,
+        uint32_t notifyFlag, uint8_t const * const rxBuf,
+        uint16_t const rxLen);
+    void handleServerCmd(uint8_t const * const rxBuf,
+        uint16_t const rxLen);
+    void rxPacketEvent(TExternPort port,
+        uint8_t const * const rxBuf, uint16_t const dataLen);
+    int serverDataHandle(uint8_t const * const rxBuf,
+        uint16_t const rxLen, uint32_t &notifyId, uint32_t &cmdId);
 public:
     /*! Inflight double list array */
     struct list_head inflight[INFLIGHT_NUM];

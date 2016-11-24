@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-10-20
 * Last updated for version 1.0.0
-* Last updated on  2016-11-21
+* Last updated on  2016-11-24
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -30,12 +30,30 @@ private:
         uint8_t *pBuf;
         int bufSize;
     }TRecieveBuf;
+    /*! Transmit Recieve Buffer type */
+    typedef struct TRingMsgPro {
+        /*! state switch and interval timer */
+        TUserTimer smTimer, itvTimer;
+        /* receive message over flag */
+        bool recvOver;
+        /*! recieve message lenght */
+        uint32_t msgLen;
+    }TRingMsgPro;
     /*! port state machine */
     QP::QMsm *port[EXTERN_PORT_NUM];
     /* recv ring buffer for all port */
     TCharRingBuf ringBuf[EXTERN_PORT_NUM];
     /* recieve buffer for port */
     TRecieveBuf recvBuf[EXTERN_PORT_NUM];
+    TRingMsgPro ringMsgPro[EXTERN_PORT_NUM];
+    /* 1ms time out event */
+    QP::QTimeEvt m_timeEvt;
+#ifdef MSG_QUEUE_PSM
+    /* define send queue here for port message SM, But
+        in inflight, there is not need. */
+#endif
+    void qtCharMsgPro(void);
+    void charMsgPro(int port);
 protected:
     static QP::QState active(Transmitor * const me);
     static QP::QState initial(Transmitor * const me,

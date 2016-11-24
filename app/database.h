@@ -34,3 +34,4 @@ protected:
 } /* namespace ARCS */
 
 #endif /* __DATABASE_H__ */
+
