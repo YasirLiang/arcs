@@ -59,7 +59,7 @@ typedef struct TRequestElem {
     /*! request executable status list, node type is TRStatusNode */
     struct list_head statusList;
     uint16_t buflen; /*! request buffer length */
-    uin8_t buf[REQUEST_BUF_SIZE]; /*! buffer of request */
+    uint8_t buf[REQUEST_BUF_SIZE]; /*! buffer of request */
     /* specific request run function */
     int (*run)(struct TRequestElem *elem);
 }TRequestElem;

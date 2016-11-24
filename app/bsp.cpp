@@ -32,21 +32,12 @@
 // mailto:info@state-machine.com
 //****************************************************************************
 #include <QtWidgets>
-#include "gui.h"
 //-----------------
 #include "qpcpp.h"
-#include "dpp.h"
+#include "arcs.h"
 #include "bsp.h"
 
 Q_DEFINE_THIS_FILE
-
-#ifdef Q_SPY
-#error "oooooo1"
-    enum {
-        PHILO_STAT = QP::QS_USER
-    };
-    static uint8_t const l_time_tick = 0U; // for QS
-#endif
 
 //............................................................................
 static uint32_t l_rnd; // random seed
@@ -66,10 +57,6 @@ void QP::QF::onCleanup(void) {
 void BSP_init(void) {
     Q_ALLEGE(QS_INIT((char *)0));
     QS_RESET();
-    QS_OBJ_DICTIONARY(&l_time_tick);
-    QS_USR_DICTIONARY(PHILO_STAT);
-
-    BSP_randomSeed(1234U);
 }
 //............................................................................
 void BSP_terminate(int) {
@@ -77,58 +64,7 @@ void BSP_terminate(int) {
     QP::QF::stop(); // stop the QF::run() thread
     qApp->quit(); // quit the Qt application *after* the QF_run() has stopped
 }
-//............................................................................
-void BSP_displayPhilStat(uint8_t n, char_t const *stat) {
 
-    static QLabel * const philoLabel[] = {
-        Gui::instance()->m_philoLabel_0,
-        Gui::instance()->m_philoLabel_1,
-        Gui::instance()->m_philoLabel_2,
-        Gui::instance()->m_philoLabel_3,
-        Gui::instance()->m_philoLabel_4
-    };
-    static QPixmap thinking(":/res/thinking.png");
-    static QPixmap hungry  (":/res/hungry.png");
-    static QPixmap eating  (":/res/eating.png");
-
-    Q_REQUIRE(n < Q_DIM(philoLabel));
-
-    switch (stat[0]) {
-    case 't':
-        philoLabel[n]->setPixmap(thinking);
-        break;
-    case 'h':
-        philoLabel[n]->setPixmap(hungry);
-        break;
-    case 'e':
-        philoLabel[n]->setPixmap(eating);
-        break;
-    }
-
-    qDebug("philo[%d] is %s", n, stat);
-}
-//............................................................................
-void BSP_displayPaused(uint8_t paused) {
-    if (paused != 0U) {
-        qDebug("PAUSED");
-        Gui::instance()->m_pauseButton->setText("PAUSED");
-    }
-    else {
-        qDebug("SERVING");
-        Gui::instance()->m_pauseButton->setText("SERVING");
-    }
-}
-//............................................................................
-uint32_t BSP_random(void) {     // a very cheap pseudo-random-number generator
-    // "Super-Duper" Linear Congruential Generator (LCG)
-    // LCG(2^32, 3*7*11*13*23, 0, seed)
-    l_rnd = l_rnd * (3*7*11*13*23);
-    return l_rnd >> 8;
-}
-//............................................................................
-void BSP_randomSeed(uint32_t seed) {
-    l_rnd = seed;
-}
 //............................................................................
 void Q_onAssert(char_t const * const module, int_t loc) {
     QMessageBox::critical(0, "PROBLEM",
@@ -140,104 +76,3 @@ void Q_onAssert(char_t const * const module, int_t loc) {
     qFatal("Assertion failed in module %s, location %d", module, loc);
 }
 
-//****************************************************************************
-#ifdef Q_SPY
-
-#include "qspy.h"
-
-static QTime l_time;
-
-//............................................................................
-static int custParserFun(QSpyRecord * const qrec) {
-    int ret = 1; // perform standard QSPY parsing
-    switch (qrec->rec) {
-        case QP::QS_QF_MPOOL_GET: { // example record to parse
-            int nFree;
-            (void)QSpyRecord_getUint32(qrec, QS_TIME_SIZE);
-            (void)QSpyRecord_getUint64(qrec, QS_OBJ_PTR_SIZE);
-            nFree = (int)QSpyRecord_getUint32(qrec, QF_MPOOL_CTR_SIZE);
-            (void)QSpyRecord_getUint32(qrec, QF_MPOOL_CTR_SIZE); // nMin
-            if (QSpyRecord_OK(qrec)) {
-                Gui::instance()->m_epoolLabel->setText(QString::number(nFree));
-                ret = 0; // don't perform standard QSPY parsing
-            }
-            break;
-        }
-    }
-    return ret;
-}
-//............................................................................
-bool QP::QS::onStartup(void const *) {
-    static uint8_t qsBuf[4*1024]; // 4K buffer for Quantum Spy
-    initBuf(qsBuf, sizeof(qsBuf));
-
-    QSPY_config(QP_VERSION,         // version
-                QS_OBJ_PTR_SIZE,    // objPtrSize
-                QS_FUN_PTR_SIZE,    // funPtrSize
-                QS_TIME_SIZE,       // tstampSize
-                Q_SIGNAL_SIZE,      // sigSize,
-                QF_EVENT_SIZ_SIZE,  // evtSize
-                QF_EQUEUE_CTR_SIZE, // queueCtrSize
-                QF_MPOOL_CTR_SIZE,  // poolCtrSize
-                QF_MPOOL_SIZ_SIZE,  // poolBlkSize
-                QF_TIMEEVT_CTR_SIZE,// tevtCtrSize
-                (void *)0,          // matFile,
-                (void *)0,
-                &custParserFun);    // customized parser function
-
-    l_time.start();                 // start the time stamp
-
-    // set up the QS filters...
-    QS_FILTER_ON(QS_QF_MPOOL_GET);
-
-    return true; // success
-}
-//............................................................................
-void QP::QS::onCleanup(void) {
-    QSPY_stop();
-}
-//............................................................................
-void QP::QS::onFlush(void) {
-    uint16_t nBytes = 1024U;
-    uint8_t const *block;
-    while ((block = getBlock(&nBytes)) != static_cast<uint8_t *>(0)) {
-        QSPY_parse(block, nBytes);
-        nBytes = 1024U;
-    }
-}
-//............................................................................
-QP::QSTimeCtr QP::QS::onGetTime(void) {
-    return static_cast<QSTimeCtr>(l_time.elapsed());
-}
-//............................................................................
-//! callback function to reset the target (to be implemented in the BSP)
-void QP::QS::onReset(void) {
-    //TBD
-}
-//............................................................................
-//! callback function to execute a uesr command (to be implemented in BSP)
-void QP::QS::onCommand(uint8_t cmdId, uint32_t param) {
-    (void)cmdId;
-    (void)param;
-    //TBD
-}
-
-//............................................................................
-void QP::QS_onEvent(void) {
-    uint16_t nBytes = 1024;
-    uint8_t const *block;
-    QF_CRIT_ENTRY(dummy);
-    if ((block = QS::getBlock(&nBytes)) != static_cast<uint8_t *>(0)) {
-        QF_CRIT_EXIT(dummy);
-        QSPY_parse(block, nBytes);
-    }
-    else {
-        QF_CRIT_EXIT(dummy);
-    }
-}
-//............................................................................
-extern "C" void QSPY_onPrintLn(void) {
-    qDebug(QSPY_line);
-}
-
-#endif // Q_SPY

@@ -18,6 +18,7 @@
 */
 #ifndef __COMMAND_H__
 #define __COMMAND_H__
+#include "circular_link_queue.h"
 /*! make a destinction between c and c++ file */
 #ifdef __cplusplus /* only define in .cpp file */
     extern "C" {   /*! for c++ file transfer c function */
@@ -50,7 +51,7 @@ typedef enum TECmdStatus {
 #define USER_PROTOCAL_SIZE 320
 
 /*! user cmd queue element */
-struct TCmdQElem {
+typedef struct TCmdQElem {
     uint32_t id;                  /*! local generate id */
     TECmdType type;               /*! type for command */
     TECmdUser user;               /*! user for command */

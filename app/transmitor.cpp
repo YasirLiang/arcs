@@ -41,10 +41,10 @@ QP::QMState const Transmitor::serving_s = {
 /*Local variable------------------------------------------------------------*/
 static Transmitor l_transmitor;
 /*Global variable-----------------------------------------------------------*/
-QP::GuiQMActive *A0_Transmitor = &l_transmitor;
+QP::QMActive *A0_Transmitor = &l_transmitor;
 /*$ Transmitor::Transmitor()................................................*/
 Transmitor::Transmitor()
-    : GuiQMActive(Q_STATE_CAST(&Transmitor::initial))
+    : QMActive(Q_STATE_CAST(&Transmitor::initial))
       m_timeEvt(this, TICK_1MS_SIG, 0U)
 {
     if (!initialRecvBufList()) {

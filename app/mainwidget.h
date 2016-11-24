@@ -53,7 +53,8 @@ private:
     uint16_t curAddr;
     uint16_t curId;
     static ARCS::RequestEvt e(ARCS::REQUEST_SIG,
-                0, (TRequestType)0, (uint8_t *)0, (uint16_t)0, QT_REQUEST);
+                (uint32_t)0, (TRequestType)0,
+                (uint8_t *)0, (uint16_t)0, QT_REQUEST);
 private slots:
     void add(void);
     void begin(void);

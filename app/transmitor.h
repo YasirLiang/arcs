@@ -21,7 +21,7 @@
 
 namespace ARCS {
 
-class Transmitor : public QP::GuiQMActive {
+class Transmitor : public QP::QMActive {
 private:
     /*! qt extern port recv buffer size */
     #define QT_ET_RECV_BUF_SIZE 1024
