@@ -20,6 +20,7 @@
 
 #include <QTcpSocket> 
 #include <QByteArray>
+#include "user.h"
 #include "ui_systemset.h"
 
 /*! class SystemSetDialog */
@@ -34,14 +35,13 @@ public:
     static int send_s(void const * const, int);
     static int recv_s(void * const, int);
     static int destroy_s(void);
-private:
     uint8_t serialPort;
-    uint8_t tcpIp[20];
-    int32_t tcpPort;
-    QTcpSocket tcpClient;
-    QByteArray datagram;
-    uint8_t avail;
-    ARCS::PortEvt qtCltRdEvt;
+    static QString tcpIp;
+    static int32_t tcpPort;
+    static QTcpSocket tcpClient;
+    static uint8_t *datagram;
+    static uint8_t avail;
+    static ARCS::PortEvt qtCltRdEvt;
 private slots:
     void changePass(void);
     void changePort(void);
@@ -49,7 +49,6 @@ private slots:
     void clientDisConnected(void);
     void qtPortReady(void);
     void displayError(QAbstractSocket::SocketError socketErr);
-
 } ;
 
 #endif /* __SYSTEMSET_H__ */

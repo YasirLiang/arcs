@@ -43,6 +43,14 @@ QP::QMState const Controller::serving_s = {
     Q_ACTION_CAST(0), /* exit action */
     Q_ACTION_CAST(0) /* initial action */
 };
+/*$ Class Local decralation-------------------------------------------------*/
+/*! commander QMsm */
+QP::QMsm *Controller::commander = Commander_getMsm();
+/*! local command id generate */
+uint32_t Controller::lcmdId;
+/*! Inflight double list array */
+struct list_head Controller::inflight[INFLIGHT_NUM];
+
 /*Local variable------------------------------------------------------------*/
 static Controller l_contoller;
 /*Global variable-----------------------------------------------------------*/
@@ -60,7 +68,6 @@ Controller::Controller()
     : GuiQMActive(Q_STATE_CAST(&Controller::initial)),
       m_timeEvt(this, TICK_1MS_SIG, 0U)
 {
-    /* get commander msm */
     commander = Commander_getMsm();
     /* initial inflight double list head */
     for (int i = 0; i < INFLIGHT_NUM; i++) {

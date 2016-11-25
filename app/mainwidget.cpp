@@ -20,7 +20,13 @@
 #include <QtWidgets>
 #include "user.h"
 #include "mainwidget.h"
-
+/*$ Class Local decralation-------------------------------------------------*/
+ARCS::RequestEvt MainSurface::e(ARCS::REQUEST_SIG,
+                    0U,
+                    (TRequestType)0,
+                    (uint8_t *)0,
+                    0U,
+                    QT_REQUEST);
 /* Local mainsurface instance-----------------------------------------------*/
 static MainSurface * l_instance;
 /*MainSurface().............................................................*/
@@ -33,13 +39,6 @@ MainSurface::MainSurface(QWidget *parent)
 
     l_instance = this;
     setupUi(this);
-
-    /* set static event */
-    e.sig = ARCS::REQUEST_SIG;
-    e.id = 0;
-    e.buflen = 0;
-    e.type = (TRequestType)0;
-    e.user = QT_REQUEST;
 
     /* set current camera control type */
     index = cmrCtlTypeComboBox->currentIndex();

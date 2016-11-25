@@ -31,6 +31,7 @@ public:
     static MainSurface *instance(void);
     void lockUi(void);
     void unLockUi(void);
+    static ARCS::RequestEvt e;
 
 private:
     bool uiLocked; /*it's setted to one until user's request is finished. */
@@ -53,7 +54,6 @@ private:
     uint16_t queryAddr;
     uint16_t curAddr;
     uint16_t curId;
-    static ARCS::RequestEvt e;
 private slots:
     void add(void);
     void begin(void);

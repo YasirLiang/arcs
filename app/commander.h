@@ -22,19 +22,19 @@ namespace ARCS {
 
 class Commander : public QP::QMsm {
 private:
-    static QP::QMsm *reQ; /*! requster Qmsm */
-    static enum TCmdQExeState {
+    QP::QMsm *reQ; /*! requster Qmsm */
+    enum TCmdQExeState {
         CQE_SUCCESS, /*! all command excute success and done */
         CQE_DOING /*! last command executing is in progress */
     }qCmdExeStatus; /*!queue command execute status */
 public:
-    static uint32_t commandId; /*! allot for user or system command */
-    static uint32_t curECmdId; /*! current excutable command id */
-    static uint32_t reqId; /*! current request id */
-    static uint32_t curEReqId; /*! current excutable request id */
-    static TPCmdQueueNode curWorkQnode; /*! curWorkQnode */
-    static TCmdQueue cmdQueue; /*! command queue */
-    static TRequestElem *pReqElem;
+    uint32_t commandId; /*! allot for user or system command */
+    uint32_t curECmdId; /*! current excutable command id */
+    uint32_t reqId; /*! current request id */
+    uint32_t curEReqId; /*! current excutable request id */
+    TPCmdQueueNode curWorkQnode; /*! curWorkQnode */
+    TCmdQueue cmdQueue; /*! command queue */
+    TRequestElem *pReqElem;
     Commander();
 protected:
     static QP::QMState const active_s;
@@ -53,8 +53,8 @@ protected:
     static QP::QState serving(Commander * const me,
         QP::QEvt const * const e);
 private:
-    static void queueCmdRun(void);
-    static void requestRun(void);
+    static void queueCmdRun(Commander * const me);
+    static void requestRun(Commander * const me);
 };
 
 } /*namespace ARCS*/

@@ -21,24 +21,25 @@
 
 namespace ARCS {
 
+/*! Transmit Recieve Buffer type */
+typedef struct TRecieveBuf {
+    uint8_t *pBuf;
+    int bufSize;
+}TRecieveBuf;
+/*! Transmit Recieve Buffer type */
+typedef struct TRingMsgPro {
+    /*! state switch and interval timer */
+    TUserTimer smTimer, itvTimer;
+    /* receive message over flag */
+    bool recvOver;
+    /*! recieve message lenght */
+    uint32_t msgLen;
+}TRingMsgPro;
+/*! class Transmitor--------------------------------------------------------*/
 class Transmitor : public QP::QMActive {
 private:
     /*! qt extern port recv buffer size */
     #define QT_ET_RECV_BUF_SIZE 1024
-    /*! Transmit Recieve Buffer type */
-    typedef struct TRecieveBuf {
-        uint8_t *pBuf;
-        int bufSize;
-    }TRecieveBuf;
-    /*! Transmit Recieve Buffer type */
-    typedef struct TRingMsgPro {
-        /*! state switch and interval timer */
-        TUserTimer smTimer, itvTimer;
-        /* receive message over flag */
-        bool recvOver;
-        /*! recieve message lenght */
-        uint32_t msgLen;
-    }TRingMsgPro;
     /*! port state machine */
     static QP::QMsm *port[EXTERN_PORT_NUM];
     /* recv ring buffer for all port */

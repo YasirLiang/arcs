@@ -16,6 +16,7 @@
 ******************************************************************************
 * @endcond
 */
+#include "user.h"
 #include "port_inflight_state_machine.h"
 
 namespace ARCS {
@@ -30,14 +31,14 @@ QP::QMsm* PortInflightStateMachine_getIns(uint8_t id) {
 }
 /*$ state machine set new port..............................................*/
 void PortInflightStateMachine_setPortVtbl(TExternPortVtbl const *ptr,
-    uin8_t id)
+    uint8_t id)
 {
     Q_ASSERT(id < EXTERN_PORT_NUM);
     l_portStateMachine[id].vptr = ptr;
 }
 /*$ state machine set ring buffer...........................................*/
 void PortInflightStateMachine_setRingBuf(TCharRingBuf *pRingBuf,
-    uin8_t id)
+    uint8_t id)
 {
     Q_ASSERT(id < EXTERN_PORT_NUM);
     l_portStateMachine[id].pRingBuf = pRingBuf;
@@ -53,9 +54,9 @@ QP::QMState const PortInflightStateMachine::active_s = {
 QP::QMState const PortInflightStateMachine::server_s = {
     &PortInflightStateMachine::active_s, /* superstate (top) */
     Q_STATE_CAST(&server), /* state handle */
-    Q_STATE_CAST(&server_e), /* entry action */
-    Q_STATE_CAST(&server_x), /* exit action */
-    Q_STATE_CAST(0) /* initial action */
+    Q_ACTION_CAST(&server_e), /* entry action */
+    Q_ACTION_CAST(&server_x), /* exit action */
+    Q_ACTION_CAST(0) /* initial action */
 };
 
 /*$ PortInflightStateMachine::PortInflightStateMachine()....................*/
@@ -74,14 +75,16 @@ QP::QState PortInflightStateMachine::active(
     int recvLen, pos; /* return varailable */
     switch (e->sig) {
         case PORTREADABLE_SIG: {
-            MZR(recvBuf, PORT_BUF_SIZE);
+            MZR(me->recvBuf, PORT_ISM_BUF_SIZE);
             /* read data from readable port */
-            recvLen = ExternPort_recv(vptr, recvBuf, PORT_BUF_SIZE);
+            recvLen = ExternPort_recv(me->vptr,
+                me->recvBuf, PORT_ISM_BUF_SIZE);
             if (recvLen != -1) {/* No Error recv? */
                 /* save messabe to ring buf */
                 pos = 0;
                 while (pos < recvLen) {
-                    RingBuffer_saveChar(pRingBuf, recvBuf[pos++]);
+                    RingBuffer_saveChar(me->pRingBuf,
+                        me->recvBuf[pos++]);
                 }
             }
             status_ = QM_HANDLED();
@@ -108,6 +111,8 @@ QP::QState PortInflightStateMachine::initial(
     };
     /* Here intial port */
     ExternPort_init(me->vptr);
+    /* avoid unused */
+    (void)e;
     /* tran state table */
     return QM_TRAN_INIT(&table_);
 }
@@ -118,8 +123,10 @@ QP::QState PortInflightStateMachine::server(PortInflightStateMachine * const me,
     QP::QState status_;
     switch (e->sig) {
         case TRANSMIT_SIG: {
-            TransmitEvt *pe = static_cast<TransmitEvt*>(e);
-            ExternPort_send(vptr, pe->buf, (int)pe->datalen);
+            TransmitEvt const * const pe =
+                static_cast<TransmitEvt const * const>(e);
+            ExternPort_send(me->vptr,
+                pe->buf, (int)pe->datalen);
             status_ = QM_HANDLED();
             break;
         }
@@ -135,13 +142,18 @@ QP::QState PortInflightStateMachine::server(PortInflightStateMachine * const me,
 QP::QState PortInflightStateMachine::server_e(
     PortInflightStateMachine * const me)
 {
-
+    /* avoid unused */
+    (void)me;
+    return QM_ENTRY(&server_s);
 }
 /*$ PortInflightStateMachine::sending_x()...................................*/
 QP::QState PortInflightStateMachine::server_x(
     PortInflightStateMachine * const me)
 {
-
+    /* avoid unused */
+    (void)me;
+    return QM_EXIT(&server_s);
 }
 
 }/* namespace ARCS */
+

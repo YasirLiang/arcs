@@ -24,9 +24,9 @@ namespace ARCS {
 class Requestor : public QP::QMsm {
 private:
     /*! current request id */
-    static uint32_t curRequestId;
+    uint32_t curRequestId;
     /*! current ReqElem */
-    static TRequestElem *curReqElem;
+    TRequestElem *curReqElem;
 public:
     Requestor();
 protected:

@@ -22,14 +22,15 @@
 namespace ARCS {
 
 class PortInflightStateMachine : public  QP::QMsm {
-private:
-    #define PORT_BUF_SIZE 1536
-    /*! Extern port virtual table */
-    TExternPortVtbl const *vptr;
+public:
+    /*! port inflight state machine buffer size */
+    #define PORT_ISM_BUF_SIZE 1536
     /*! Recieve Buffer */
-    uint8_t recvBuf[PORT_BUF_SIZE];
+    uint8_t recvBuf[PORT_ISM_BUF_SIZE];
     /*! ring buffer pointer of Port */
     TCharRingBuf *pRingBuf;
+    /*! Extern port virtual table */
+    TExternPortVtbl const *vptr;
 public:
     PortInflightStateMachine();
 protected:
@@ -48,3 +49,4 @@ protected:
 } /*  namespace ARCS*/
 
 #endif /* __PORT_INFLIGHT_STATE_MACHINE_H__ */
+

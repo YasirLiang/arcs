@@ -90,9 +90,9 @@ QP::QState Requestor::active(Requestor * const me,
                     Q_ACTION_CAST(0)/* zero terminate */
                 }
             };
-            Q_ASSERT(curRequestId ==
+            Q_ASSERT(me->curRequestId ==
                      static_cast<RequestDoneEvt const * const>(e)->rId);
-            curReqElem = (TRequestElem *)0;
+            me->curReqElem = (TRequestElem *)0;
             /* change state to idle */
             status_ = QM_TRAN(&table_);
             break;
@@ -127,12 +127,12 @@ QP::QState Requestor::idle(Requestor * const me,
     switch (e->sig) {
         case REQUEST_ELEM_SIG: {
             /* get request elememt */
-            curReqElem =
+            me->curReqElem =
                 (static_cast<RequestElemEvt const * const>(e))->pElem;
-            Q_ASSERT(curReqElem != (TRequestElem *)0);
-            curRequestId = curReqElem->id;
+            Q_ASSERT(me->curReqElem != (TRequestElem *)0);
+            me->curRequestId = me->curReqElem->id;
             /* run request function */
-            Request_run(curReqElem);
+            Request_run(me->curReqElem);
             status_ = QM_HANDLED();
             break;
         }

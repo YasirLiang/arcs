@@ -46,6 +46,14 @@ QP::QMState const Transmitor::serving_s = {
     Q_ACTION_CAST(0), /* exit action */
     Q_ACTION_CAST(0) /* initial action */
 };
+/*$ Class Local decralation-------------------------------------------------*/
+/*! port state machine */
+QP::QMsm *Transmitor::port[EXTERN_PORT_NUM];
+/* recv ring buffer for all port */
+TCharRingBuf Transmitor::ringBuf[EXTERN_PORT_NUM];
+/* recieve buffer for port */
+TRecieveBuf Transmitor::recvBuf[EXTERN_PORT_NUM];
+TRingMsgPro Transmitor::ringMsgPro[EXTERN_PORT_NUM];
 /*Local variable------------------------------------------------------------*/
 static Transmitor l_transmitor;
 /*Global variable-----------------------------------------------------------*/

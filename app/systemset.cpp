@@ -16,40 +16,43 @@
 * @endcond
 */
 /*Including file------------------------------------------------------------*/
-#include <QMessageBox> 
+#include <QMessageBox>
+#include <QtWidgets>
 #include "user.h"
-#include "extern_port.h"
-#include "extern_port_qt.h"
 #include "systemset.h"
 /*$ Local variable decrelation..............................................*/
 static SystemSetDialog l_sysSetDialog;
+/*$ Class Local decralation-------------------------------------------------*/
+ARCS::PortEvt SystemSetDialog::qtCltRdEvt(ARCS::PORTREADABLE_SIG,
+    ARCS::QT_PORT,
+    ARCS::READABLE);
+QString SystemSetDialog::tcpIp;
+int32_t SystemSetDialog::tcpPort;
+QTcpSocket SystemSetDialog::tcpClient;
+uint8_t *SystemSetDialog::datagram;
+uint8_t SystemSetDialog::avail;
 /*$ QtPortTcpSocket_getVtbl()...............................................*/
 TExternPortVtbl const * QtPortTcpSocket_getVtbl(void) {
-    return &l_qtTcpSocket.vTable;
+    return &l_sysSetDialog.vTable;
 }
 /*$ QtPortTcpSocket::setTcpSocket()..........................................*/
 void QtPortTcpSocket_setTcpSocket(char const * const pip,
     int _port)
 {
-    l_qtTcpSocket.setTcpSocket(pip, _port);
+    l_sysSetDialog.setTcpSocket(pip, _port);
 }
-/*$ QtPortTcpSocket::QtPortTcpSocket()......................................*/
-QtPortTcpSocket::QtPortTcpSocket(char const * const pip,
-    int _port)
+/*$ SystemSetDialog::SystemSetDialog()......................................*/
+SystemSetDialog::SystemSetDialog(QWidget * parent)
+    : QDialog(parent)
 {
+    setupUi(this);
+    
     vTable.init = &init_s;
     vTable.send = &send_s;
     vTable.recv = &recv_s;
     vTable.destroy = &destroy_s;
 
-    qtCltRdEvt.sig = ARCS::PORTREADABLE_SIG;
-    qtCltRdEvt.eType = ARCS::READABLE;
-    qtCltRdEvt.port = ARCS::QT_PORT;
-    memset(ip, 0, sizeof(ip));
-    memcpy(ip, pip, sizeof(ip));
-    port = _port;
     avail = 0;
-    datagram.resize(0);
     connect(&tcpClient, SIGNAL(connected()),
         this, SLOT(clientConnected()));
     connect(&tcpClient, SIGNAL(disconnected()),
@@ -59,8 +62,8 @@ QtPortTcpSocket::QtPortTcpSocket(char const * const pip,
     connect(&tcpClient, SIGNAL(error(QAbstractSocket::SocketError)),
         this, SLOT(displayError(QAbstractSocket::SocketError)));
 }
-/*$ QtPortTcpSocket::displayError().........................................*/
-void QtPortTcpSocket::displayError(QAbstractSocket::SocketError socketErr) {
+/*$ SystemSetDialog::displayError().........................................*/
+void SystemSetDialog::displayError(QAbstractSocket::SocketError socketErr) {
     if (socketErr == QTcpSocket::RemoteHostClosedError) {
         return;
     }
@@ -71,82 +74,95 @@ void QtPortTcpSocket::displayError(QAbstractSocket::SocketError socketErr) {
     tcpClient.close();
     avail = 0;
 }
-/*$ QtPortTcpSocket::clientConnected().......................................*/
-void QtPortTcpSocket::clientConnected(void) {
+/*$ SystemSetDialog::clientConnected()......................................*/
+void SystemSetDialog::clientConnected(void) {
     avail = 1;
     /* can set connect server successful */
-    qDebug("Connect to Server success( %s-%d )\n", ip, port);
+    qDebug("Connect to Server success( %s-%d )\n",
+        (char *)&tcpIp, tcpPort);
 }
-/*$ QtPortTcpSocket::clientDisConnected()...................................*/
-void QtPortTcpSocket::clientDisConnected(void) {
+/*$ SystemSetDialog::clientDisConnected()...................................*/
+void SystemSetDialog::clientDisConnected(void) {
     avail = 0;
     /* can set disconnect server successful */
-    qDebug("Client DisConnect From Server( %s-%d )\n", ip, port);
+    qDebug("Client DisConnect From Server( %s-%d )\n",
+        (char *)&tcpIp, tcpPort);
 }
-/*$ QtPortTcpSocket::qtPortReady()..........................................*/
-void QtPortTcpSocket::qtPortReady(void) {
+/*$ SystemSetDialog::qtPortReady()..........................................*/
+void SystemSetDialog::qtPortReady(void) {
     if (avail) {
         /* publish port readable signal */
-        QP::QF::PUBLISH(&this.qtCltRdEvt, (void*)0);
+        QP::QF::PUBLISH(&qtCltRdEvt, (void*)0);
     }
 }
-/*$ QtPortTcpSocket::setTcpSocket().........................................*/
-void QtPortTcpSocket::setTcpSocket(char const * const pip,
+/*$ SystemSetDialog::setTcpSocket().........................................*/
+void SystemSetDialog::setTcpSocket(char const * const pip,
     int _port)
 {
-    memset(ip, 0, sizeof(ip));
-    memcpy(ip, pip, sizeof(ip));
-    port = _port;
+    tcpIp.clear();
+    tcpIp.sprintf("%s", pip);
+    tcpPort = _port;
     avail = 0;
-    datagram.resize(0);
-    tcpClient.connectToHost(ip, port);
+    datagram = (uint8_t *)0;
+    tcpClient.connectToHost(tcpIp, tcpPort);
 }
 /*$ specific Extern port init function......................................*/
-void QtPortTcpSocket::init_s(void) {
-    l_qtTcpSocket.tcpClient.connectToHost(l_qtTcpSocket.ip,
-        l_qtTcpSocket.port);
+void SystemSetDialog::init_s(void) {
+    tcpClient.connectToHost(tcpIp,
+        tcpPort);
 }
 /*$ specific Extern port send function......................................*/
-int QtPortTcpSocket::send_s(void const * const buf, int sendLen) {
+int SystemSetDialog::send_s(void const * const buf, int sendLen) {
     int ret = -1;
-    if (l_qtTcpSocket.avail) {
-        l_qtTcpSocket.datagram.resize(sendLen);
-        memcpy(l_qtTcpSocket.datagram.data(),
-            (char const * const)buf, l_qtTcpSocket.datagram.size());
-        l_qtTcpSocket.tcpClient.write(l_qtTcpSocket.datagram.data(),
-            l_qtTcpSocket.datagram.size());
-        /* release buffer */
-        l_qtTcpSocket.datagram.resize(0);
+    if (avail) {
+        datagram = (uint8_t *)malloc(sendLen);
+        if (datagram != (uint8_t *)0) {
+            memcpy(datagram,
+                (uint8_t *)buf, sendLen);
+            tcpClient.write((char *)datagram, sendLen);
+            free(datagram);
+        }
         ret = sendLen;
     }
     return ret;
 }
 /*$ specific Extern port recv function......................................*/
-int QtPortTcpSocket::recv_s(void * const buf, int bufSize) {
+int SystemSetDialog::recv_s(void * const buf, int bufSize) {
     int reLen = -1;
-    if (l_qtTcpSocket.avail) {
-        l_qtTcpSocket.datagram.resize(
-            l_qtTcpSocket.tcpClient.bytesAvailable());
-        reLen = (int)l_qtTcpSocket.datagram.size();
-        if (bufSize < reLen) {
-            l_qtTcpSocket.tcpClient.read(l_qtTcpSocket.datagram.data(),
-                l_qtTcpSocket.datagram.size());
-            memcpy(buf, l_qtTcpSocket.datagram.data, reLen);
+    if (avail) {
+        reLen = tcpClient.bytesAvailable();
+        if (bufSize >= reLen) {
+            datagram = (uint8_t *)malloc(reLen);
+            if (datagram != (uint8_t *)0) {
+                tcpClient.read((char *)datagram, reLen);
+                memcpy((uint8_t * const)buf,
+                    datagram, reLen);
+                free(datagram);
+            }
         }
         else {
             /* set error return */
             reLen = -1;
         }
         /* release buffer */
-        datagram.resize(0);
+        datagram = (uint8_t *)0;
     }
     /* Error return */
     return reLen;
 }
 /*$ specific Extern port destroy function...................................*/
-int QtPortTcpSocket::destroy_s(void) {
-    l_qtTcpSocket.tcpClient.close();
-    l_qtTcpSocket.avail = 0;
-    l_qtTcpSocket.datagram.resize(0);
+int SystemSetDialog::destroy_s(void) {
+    tcpClient.close();
+    avail = 0;
+    datagram = (uint8_t *)0;
+    return 0;
+}
+/*$ SystemSetDialog::changePass()...........................................*/
+void SystemSetDialog::changePass(void) {
+
+}
+/*$ SystemSetDialog::changePort()...........................................*/
+void SystemSetDialog::changePort(void) {
+
 }
 
