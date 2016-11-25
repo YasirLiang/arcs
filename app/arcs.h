@@ -210,9 +210,9 @@ public:
 class RequestDoneEvt : public QP::QEvt {
 public:
     uint32_t rId; /*! request id */
-    RequestDoneEvt(uin32_t _id)
+    RequestDoneEvt(uint32_t id_)
       : QEvt(REQUEST_DONE_SIG),
-        rId(_id)
+        rId(id_)
     {
     }
 };
@@ -234,7 +234,7 @@ QP::QMsm *Commander_getMsm(void);
 struct list_head * Controller_getQtInflight(void);
 uint32_t Controller_getNextReqId(void);
 /*! match current excuting command id---------------------------------------*/
-bool Commander_matchCmdId(uint32_t cmdId);
+bool Commander_matchCmdId(uint32_t cmdId, TPCmdQueueNode *ppCurWk);
 /*! Commander_updateCurrentReq----------------------------------------------*/
 void Commander_updateCurrentReq(uint32_t req);
 QP::QMsm* PortMsgStateMachine_getIns(uint8_t id);
@@ -243,7 +243,7 @@ void PortMsgStateMachine_setPortVtbl(TExternPortVtbl *ptr,
 void PortMsgStateMachine_setRingBuf(TCharRingBuf *pRingBuf,
     uint8_t id);
 QP::QMsm* PortInflightStateMachine_getIns(uint8_t id);
-void PortInflightStateMachine_setPortVtbl(TExternPortVtbl *ptr,
+void PortInflightStateMachine_setPortVtbl(TExternPortVtbl const *ptr,
     uint8_t id);
 void PortInflightStateMachine_setRingBuf(TCharRingBuf *pRingBuf,
     uint8_t id);
@@ -253,8 +253,7 @@ void PortInflightStateMachine_setRingBuf(TCharRingBuf *pRingBuf,
 namespace ARCS {
 
 /*! set zero memory define */
-#define MZR(pos, size) \
-do {\
+#define MZR(pos, size) do {\
     memset(pos, 0, size);\
 } while(0)
 

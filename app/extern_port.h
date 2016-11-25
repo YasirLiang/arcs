@@ -44,7 +44,7 @@ int ExternPort_send(TExternPortVtbl const * const ptr,
 int ExternPort_recv(TExternPortVtbl const * const ptr,
     void * const buf, int len);
 /*! ExternPort::destroy()...................................................*/
-void ExternPort_destroy(TExternPortVtbl const * const ptr);
+int ExternPort_destroy(TExternPortVtbl const * const ptr);
 
 #ifdef __cplusplus
 } /*end extern "C" */

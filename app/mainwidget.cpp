@@ -17,29 +17,29 @@
 * @endcond
 */
 /*Incluing file-------------------------------------------------------------*/
-#include <QWidgets>
-#include "qpcpp.h"
-#include "list.h"
-#include "request.h"
-#include "ring_buffer.h"
-#include "extern_port.h"
-#include "arcs.h"
-#include "bsp.h"
+#include <QtWidgets>
+#include "user.h"
 #include "mainwidget.h"
 
-Q_DEFINE_THIS_FILE
 /* Local mainsurface instance-----------------------------------------------*/
 static MainSurface * l_instance;
 /*MainSurface().............................................................*/
 MainSurface::MainSurface(QWidget *parent)
     : QWidget(parent)
 {
-    int const index;
+    int index;
     bool ok;
     QString s;
 
     l_instance = this;
     setupUi(this);
+
+    /* set static event */
+    e.sig = ARCS::REQUEST_SIG;
+    e.id = 0;
+    e.buflen = 0;
+    e.type = (TRequestType)0;
+    e.user = QT_REQUEST;
 
     /* set current camera control type */
     index = cmrCtlTypeComboBox->currentIndex();
@@ -66,12 +66,12 @@ MainSurface::MainSurface(QWidget *parent)
         optComboBox->setEnabled(1); /* enabled */
     }
     else if (index == 1) { /* SIGN */
-        cmrCType = TERMINAL_SIGN;
+        optType = TERMINAL_SIGN;
         /* disable */
         optComboBox->setEnabled(0); /* disabled */
     }
     else if (index == 2) { /* vote */
-        cmrCType = TERMINAL_VOTE;
+        optType = TERMINAL_VOTE;
         optComboBox->setEnabled(0); /* disabled */
     }
     else {
@@ -150,11 +150,8 @@ void MainSurface::unLockUi(void) {
 /*add().....................................................................*/
 void MainSurface::add(void) {
     if (uiLocked) {
-        /* current unused requestment id  will be getted, 
-            and this requestment be push event queue 
-            being executed until prex requestment being finished */
-        requstId = ARCS::getReqIns()->get_nextRequestId();
-        e.id = requstId;
+        /* current requestment id  will be setted in specific
+            command function, so e.id not set here */
         e.type = CAMERA_CONTROL;
         e.buf[0] = curCamera;
         e.buf[1] = levelSpeed;
@@ -188,7 +185,8 @@ void MainSurface::add(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*begin()...................................................................*/
@@ -229,7 +227,8 @@ void MainSurface::begin(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*cameraSwitch()............................................................*/
@@ -251,7 +250,8 @@ void MainSurface::cameraSwitch(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*clearUnConnected()........................................................*/
@@ -281,7 +281,8 @@ void MainSurface::down(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*downLeft()................................................................*/
@@ -303,7 +304,8 @@ void MainSurface::downLeft(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*downRight()...............................................................*/
@@ -325,7 +327,8 @@ void MainSurface::downRight(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*left()....................................................................*/
@@ -347,7 +350,8 @@ void MainSurface::left(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*right()...................................................................*/
@@ -369,7 +373,8 @@ void MainSurface::right(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*matrixSwitch()............................................................*/
@@ -389,7 +394,8 @@ void MainSurface::matrixSwitch(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*pause()...................................................................*/
@@ -430,7 +436,8 @@ void MainSurface::pause(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*query()...................................................................*/
@@ -453,7 +460,8 @@ void MainSurface::query(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*reduce()..................................................................*/
@@ -493,7 +501,8 @@ void MainSurface::reduce(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*regain()..................................................................*/
@@ -526,7 +535,8 @@ void MainSurface::regain(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*setSys()..................................................................*/
@@ -536,7 +546,8 @@ void MainSurface::setSys(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*showConnected()...........................................................*/
@@ -582,7 +593,8 @@ void MainSurface::stop(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*up()........................................................................*/
@@ -604,7 +616,8 @@ void MainSurface::up(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*upLeft()..................................................................*/
@@ -626,7 +639,8 @@ void MainSurface::upLeft(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*upRight().................................................................*/
@@ -648,32 +662,29 @@ void MainSurface::upRight(void) {
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
-            "Please waitting last requst finish......", QMessageBox::Ok, NULL);
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
     }
 }
 /*levelSpeedDoTxtChange()...................................................*/
 void MainSurface::levelSpeedDoTxtChange(const QString &txt) {
-    QString a;
     bool ok;
     if (!txt.isEmpty()) {
-        a = txt->text();
-        levelSpeed = (uint8_t)a.toInt(&ok, 10);
+        levelSpeed = (uint8_t)txt.toInt(&ok, 10);
         qDebug("levelSpeed speed number = %d\n", levelSpeed);
     }
 }
 /*verticalSpeedDoTxtChange()................................................*/
 void MainSurface::verticalSpeedDoTxtChange(const QString &txt) {
-    QString a;
     bool ok;
     if (!txt.isEmpty()) {
-        a = txt->text();
-        vertivalSpeed = (uint8_t)a.toInt(&ok, 10);
+        vertivalSpeed = (uint8_t)txt.toInt(&ok, 10);
         qDebug("Vertival speed number = %d\n", vertivalSpeed);
     }
 }
 
 void MainSurface::cmrCtlTypeComboBoxValChanged(void) {
-    int const index;
+    int index;
     index = cmrCtlTypeComboBox->currentIndex();
     if (index == 0) {/* focus */
         cmrCType = FOCUS;
@@ -700,7 +711,7 @@ void MainSurface::curcameraComboBoxValChanged(void) {
 }
 
 void MainSurface::optTypeComboBoxValChanged(void) {
-    int const index;
+    int index;
     index = optTypeComboBox->currentIndex();
     if (index == 0) {/* operetion to speak */
         optType = TERMINAL_SPEAK;
@@ -709,14 +720,14 @@ void MainSurface::optTypeComboBoxValChanged(void) {
         resumePushBtn->setEnabled(0); /* disabled */
     }
     else if (index == 1) { /* SIGN */
-        cmrCType = TERMINAL_SIGN;
+        optType = TERMINAL_SIGN;
         /* disable */
         optComboBox->setEnabled(0); /* disabled */
         pausePushBtn->setEnabled(1); /* enabled */
         resumePushBtn->setEnabled(1); /* enabled */
     }
     else if (index == 2) { /* vote */
-        cmrCType = TERMINAL_VOTE;
+        optType = TERMINAL_VOTE;
         optComboBox->setEnabled(0); /* disabled */
         pausePushBtn->setEnabled(1); /* enabled */
         resumePushBtn->setEnabled(1); /* enabled */

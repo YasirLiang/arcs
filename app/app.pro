@@ -46,44 +46,52 @@ INCLUDEPATH = . \
     $$QPCPP/ports/qt
 
 SOURCES += \
+    database.cpp \
+    extern_port.c \
+    ring_buffer.c \
+    port_message_state_machine.cpp \
     main.cpp \
     bsp.cpp \
     mainwidget.cpp \
     systemset.cpp \
-    circular_link_queue.c \
-    command.c \
     commander.cpp \
-    controller.cpp \
-    database.cpp \
-    inflight.c \
-    main.cpp \
-    mainwidget.cpp \
-    qt.cpp \
+    command.c \
+    qt_user.cpp \
     request.c \
+    controller.cpp \
     requestor.cpp \
+    port_inflight_state_machine.cpp \
     transmitor.cpp \
-    usertimer.c
+    usertimer.c \
+    circular_link_queue.c \
+    inflight.c
+
 
 HEADERS += \
-    bsp.h \
-    arcs.h \
-    mainwidget.h \
-    systemset.h \
+    version.h \
     circular_link_queue.h \
-    command.h \
+    extern_port.h \
+    port_message_state_machine.h \
+    port_inflight_state_machine.h \
+    usertimer.h \
+    ring_buffer.h \
     protocal_qt.h \
-    request.h \
+    database.h \
+    bsp.h \
+    list.h \
+    systemset.h \
+    uos.h \
+    user.h \
+    command.h \
+    commander.h \
+    qt_user.h \
     controller.h \
     inflight.h \
-    commander.h \
+    request.h \
     requestor.h \
-    uos.h \
-    circular_link_queue.h \
-    database.h \
+    arcs.h \
     transmitor.h \
-    version.h \
-    usertimer.h \
-    list.h
+    mainwidget.h
 
 FORMS += login.ui \
     mainwidget.ui \

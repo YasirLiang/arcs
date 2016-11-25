@@ -24,9 +24,9 @@ namespace ARCS {
 class Requestor : public QP::QMsm {
 private:
     /*! current request id */
-    uint32_t curRequestId;
+    static uint32_t curRequestId;
     /*! current ReqElem */
-    TRequestElem *curReqElem;
+    static TRequestElem *curReqElem;
 public:
     Requestor();
 protected:
@@ -37,13 +37,13 @@ protected:
         QP::QEvt const * const e);
     static QP::QState active_e(Requestor * const me);
     static QP::QState active_x(Requestor * const me);
-    static QP::State idle(Requestor * const me,
+    static QP::QState idle(Requestor * const me,
         QP::QEvt const * const e);
-    static QP::State idle_e(Requestor * const me);
-    static QP::State idle_x(Requestor * const me);
-    static QP::State initial(Requestor * const me,
+    static QP::QState idle_e(Requestor * const me);
+    static QP::QState idle_x(Requestor * const me);
+    static QP::QState initial(Requestor * const me,
         QP::QEvt const * const e);
-    static QP::State serving(Requestor * const me,
+    static QP::QState serving(Requestor * const me,
         QP::QEvt const * const e);
 };
 

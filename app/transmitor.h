@@ -40,22 +40,28 @@ private:
         uint32_t msgLen;
     }TRingMsgPro;
     /*! port state machine */
-    QP::QMsm *port[EXTERN_PORT_NUM];
+    static QP::QMsm *port[EXTERN_PORT_NUM];
     /* recv ring buffer for all port */
-    TCharRingBuf ringBuf[EXTERN_PORT_NUM];
+    static TCharRingBuf ringBuf[EXTERN_PORT_NUM];
     /* recieve buffer for port */
-    TRecieveBuf recvBuf[EXTERN_PORT_NUM];
-    TRingMsgPro ringMsgPro[EXTERN_PORT_NUM];
+    static TRecieveBuf recvBuf[EXTERN_PORT_NUM];
+    static TRingMsgPro ringMsgPro[EXTERN_PORT_NUM];
     /* 1ms time out event */
     QP::QTimeEvt m_timeEvt;
 #ifdef MSG_QUEUE_PSM
     /* define send queue here for port message SM, But
         in inflight, there is not need. */
 #endif
-    void qtCharMsgPro(void);
-    void charMsgPro(int port);
+    static void qtCharMsgPro(void);
+    static void charMsgPro(int port);
+    bool initialRecvBufList(void);
+public:
+    Transmitor();
 protected:
-    static QP::QState active(Transmitor * const me);
+    static QP::QMState const active_s;
+    static QP::QMState const serving_s;
+    static QP::QState active(Transmitor * const me,
+        QP::QEvt const * const e);
     static QP::QState initial(Transmitor * const me,
         QP::QEvt const * const e);
     static QP::QState serving(Transmitor * const me,

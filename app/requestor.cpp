@@ -16,6 +16,7 @@
 ******************************************************************************
 * @endcond
 */
+#include "user.h"
 #include "requestor.h"
 
 namespace ARCS {
@@ -23,20 +24,20 @@ namespace ARCS {
 /*$ Local varailable--------------------------------------------------------*/
 static Requestor l_rAct;
 
+QP::QMState const Requestor::serving_s = {
+    static_cast<QP::QMState const *>(0), /* superstate (top) */
+    Q_STATE_CAST(&serving), /* state handle active*/
+    Q_ACTION_CAST(0), /* entry action */
+    Q_ACTION_CAST(0), /* exit action */
+    Q_ACTION_CAST(0) /* no initial action */
+};
+
 QP::QMState const Requestor::active_s = {
     &Requestor::serving_s, /*superstae(serving_s)*/
     Q_STATE_CAST(&active), /* state handle active*/
     Q_ACTION_CAST(&active_e),/* entry action */
     Q_ACTION_CAST(&active_x),/* exit action */
     Q_ACTION_CAST(0) /* no initial action */
-};
-
-QP::QMState const Requestor::serving_s = {
-    static_cast<QP::QMState const *>(0), /* superstate (top) */
-    Q_STATE_CAST(&serving), /* state handle active*/
-    Q_STATE_CAST(0), /* entry action */
-    Q_STATE_CAST(0), /* exit action */
-    Q_STATE_CAST(0) /* no initial action */
 };
 
 QP::QMState const Requestor::idle_s = {
@@ -52,12 +53,12 @@ QP::QMsm *Requestor_getMsm(void) {
 }
 /*$ Requestor().............................................................*/
 Requestor::Requestor()
-  : QMsm(Q_STATE_CAST(&Requestor::initial)))
+  : QMsm(Q_STATE_CAST(&Requestor::initial))
 {
     curReqElem = (TRequestElem *)0;
 }
 /*$ initial()...............................................................*/
-QP::State Requestor::initial(Requestor * const me,
+QP::QState Requestor::initial(Requestor * const me,
         QP::QEvt const * const e)
 {
     static QP::QMTranActTable const tatbl_ = { /* transition-action table */
@@ -66,6 +67,9 @@ QP::State Requestor::initial(Requestor * const me,
             Q_ACTION_CAST(0)  /* zero terminator */
         }
     };
+    /* avoid unused */
+    (void)me;
+    (void)e;
     return QM_TRAN_INIT(&tatbl_);
 }
 /*$ active()................................................................*/
@@ -86,7 +90,8 @@ QP::QState Requestor::active(Requestor * const me,
                     Q_ACTION_CAST(0)/* zero terminate */
                 }
             };
-            Q_ASSERT(curRequestId == static_cast<RequestDoneEvt *>(e)->rId);
+            Q_ASSERT(curRequestId ==
+                     static_cast<RequestDoneEvt const * const>(e)->rId);
             curReqElem = (TRequestElem *)0;
             /* change state to idle */
             status_ = QM_TRAN(&table_);
@@ -104,21 +109,26 @@ QP::QState Requestor::active(Requestor * const me,
 }
 /*$ active_e()..............................................................*/
 QP::QState Requestor::active_e(Requestor * const me) {
+    /* avoid unused */
+    (void)me;
     return QM_ENTRY(&idle_s);
 }
 /*$ active_x()..............................................................*/
 QP::QState Requestor::active_x(Requestor * const me) {
+    /* avoid unused */
+    (void)me;
     return QM_EXIT(&idle_s);
 }
 /*$ idle()..................................................................*/
-QP::State Requestor::idle(Requestor * const me,
+QP::QState Requestor::idle(Requestor * const me,
     QP::QEvt const * const e)
 {
     QP::QState status_;
     switch (e->sig) {
         case REQUEST_ELEM_SIG: {
             /* get request elememt */
-            curReqElem = (static_cast<RequestElemEvt *>(e))->pElem;
+            curReqElem =
+                (static_cast<RequestElemEvt const * const>(e))->pElem;
             Q_ASSERT(curReqElem != (TRequestElem *)0);
             curRequestId = curReqElem->id;
             /* run request function */
@@ -135,18 +145,24 @@ QP::State Requestor::idle(Requestor * const me,
             break;
         }
     }
+    /* avoid unused */
+    (void)me;
     return status_;
 }
 /*$ idle_e()................................................................*/
-QP::State Requestor::idle_e(Requestor * const me) {
+QP::QState Requestor::idle_e(Requestor * const me) {
+    /* avoid unused */
+    (void)me;
     return QM_ENTRY(&idle_s);
 }
 /*$ idle_x()................................................................*/
-QP::State Requestor::idle_x(Requestor * const me) {
+QP::QState Requestor::idle_x(Requestor * const me) {
+    /* avoid unused */
+    (void)me;
     return QM_EXIT(&idle_s);
 }
 /*$ serving()...............................................................*/
-QP::State Requestor::serving(Requestor * const me,
+QP::QState Requestor::serving(Requestor * const me,
     QP::QEvt const * const e)
 {
     QP::QState status_;
@@ -156,6 +172,8 @@ QP::State Requestor::serving(Requestor * const me,
             break;
         }
     }
+    /* avoid unused */
+    (void)me;
     return status_;
 }
 

@@ -29,7 +29,7 @@ QP::QMsm* PortInflightStateMachine_getIns(uint8_t id) {
     return &l_portStateMachine[id];
 }
 /*$ state machine set new port..............................................*/
-void PortInflightStateMachine_setPortVtbl(TExternPortVtbl *ptr,
+void PortInflightStateMachine_setPortVtbl(TExternPortVtbl const *ptr,
     uin8_t id)
 {
     Q_ASSERT(id < EXTERN_PORT_NUM);

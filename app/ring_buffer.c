@@ -17,6 +17,9 @@
 * @endcond
 */
 /*Including File------------------------------------------------------------*/
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "ring_buffer.h"
 /*$ RingBuffer::initial()...................................................*/
 void RingBuffer_initial(TCharRingBuf *rBuf,

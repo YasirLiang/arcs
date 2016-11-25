@@ -16,10 +16,15 @@
 ******************************************************************************
 * @endcond
 */
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "usertimer.h"
 
 #ifdef WIN32
+#ifdef __cplusplus
 extern "C" Timestamp clk_monotonic(void);
+#endif /* __cplusplus */
 Timestamp clk_monotonic(void) {
     LARGE_INTEGER count;
     QueryPerformanceCounter(&count);
@@ -61,7 +66,9 @@ Timestamp clk_monotonic(void) {
 #endif
 
 #ifdef WIN32
+#ifdef __cplusplus
 extern "C" uint32_t clk_convert_to_ms(Timestamp time_stamp);
+#endif /* __cplusplus */
 uint32_t clk_convert_to_ms(Timestamp time_stamp) {
     LARGE_INTEGER freq;
     QueryPerformanceFrequency(&freq);

@@ -1,5 +1,5 @@
 /*
-* @file
+* @file uos.h
 * @brief user os define
 * @ingroup user os define
 * @cond

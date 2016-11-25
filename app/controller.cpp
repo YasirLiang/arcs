@@ -17,6 +17,11 @@
 * @endcond
 */
 /*Including-----------------------------------------------------------------*/
+#include "user.h"
+#include "protocal_qt.h"
+#include "qt_user.h"
+#include "usertimer.h"
+#include "inflight.h"
 #include "controller.h"
 
 namespace ARCS {
@@ -41,7 +46,7 @@ QP::QMState const Controller::serving_s = {
 /*Local variable------------------------------------------------------------*/
 static Controller l_contoller;
 /*Global variable-----------------------------------------------------------*/
-QP::GuiQMActive A0_Controller = &l_contoller;
+QP::GuiQMActive *A0_Controller = &l_contoller;
 /*$ Controller::getQtInflight().............................................*/
 struct list_head * Controller_getQtInflight(void) {
     return &l_contoller.inflight[QT_INFLIGHT];
@@ -52,12 +57,11 @@ uint32_t Controller_getNextReqId(void) {
 }
 /*$ Controller::Controller()................................................*/
 Controller::Controller()
-    : GuiQMActive(Q_STATE_CAST(&Controller::initial))
+    : GuiQMActive(Q_STATE_CAST(&Controller::initial)),
       m_timeEvt(this, TICK_1MS_SIG, 0U)
 {
     /* get commander msm */
     commander = Commander_getMsm();
-
     /* initial inflight double list head */
     for (int i = 0; i < INFLIGHT_NUM; i++) {
         INIT_LIST_HEAD(&inflight[i]);
@@ -73,13 +77,16 @@ QP::QState Controller::active(Controller * const me,
             /*1\ looking for inflight list and proccess timeout
                   node */
             timeTick_();
-            status_ = QM_HANDLE();
+            status_ = QM_HANDLED();
             break;
         }
         default: {
             break;
         }
     }
+    /* avoid unused */
+    (void)me;
+    return status_;
 }
 /*$ Controller::active()....................................................*/
 QP::QState Controller::initial(Controller * const me,
@@ -93,6 +100,8 @@ QP::QState Controller::initial(Controller * const me,
     };
     /* initial msm */
     commander->init();
+    /* avoid unused */
+    (void)e;
     /* tran state table */
     return QM_TRAN_INIT(&table_);
 }
@@ -108,21 +117,23 @@ QP::QState Controller::serving(Controller * const me,
             break;
         }
         case TRANSMIT_SIG: {
-            TransmitEvt *e_ = static_cast<TransmitEvt *>(e);
+            TransmitEvt const * const e_ =
+                static_cast<TransmitEvt const * const>(e);
             /* analysis data and generate command */
             rxPacketEvent(e_->port,
                 e_->buf, e_->datalen);
             break;
         }
         case REQUEST_SIG: {
-            RequestEvt *e_ = static_cast<RequestEvt *>(e);
+            RequestEvt const * const e_ =
+                    static_cast<RequestEvt const * const>(e);
             if (e_->user == QT_REQUEST) {
                 cmd = (TPCmdQueueNode)malloc(sizeof(TCmdQueueNode));
-                if (cmd != (TPCmdQueueNode)) {
+                if (cmd != (TPCmdQueueNode)0) {
                     cmd->elem.type = USER_CMD;
                     cmd->elem.user = QT_USER;
                     cmd->elem.execStatus = NO_START;
-                    cmd->elem.id = getNextCmd();
+                    cmd->elem.id = l_contoller.getNextCmd();
                     /* request data length set */
                     cmd->elem.cmdBufLen = e_->buflen;
                     if (e_->buflen > 0) {
@@ -187,6 +198,9 @@ QP::QState Controller::serving(Controller * const me,
             break;
         }
     }
+    /* avoid unused */
+    (void)me;
+    return status_;
 }
 /*$ Controller::serving_e()................................................*/
 QP::QState Controller::serving_e(Controller * const me) {
@@ -210,7 +224,7 @@ int Controller::serverDataHandle(uint8_t const * const rxBuf,
     TInflightCmd_pNode p; /* pointer to inflight node */
     TPCmdQueueNode pCurCmd;
     TPRequestNode pCurReq;
-    uint32_t wkCmdId, reState;
+    uint32_t reState;
     uint32_t notifyFlag = 0;
     bool matchCmd;
     bool reqDone;
@@ -296,11 +310,6 @@ void Controller::rxPacketEvent(TExternPort port,
 {
     uint32_t cmdId = 0;
     uint32_t notifyId = 0;
-    bool reqDone;
-    TInflightCmd_pNode p; /* pointer to inflight node */
-    TPRequestNode pCurReq;
-    TPCmdQueueNode pCurCmd;
-    bool matchCmd = (bool)0;
     Q_ASSERT((dataLen != 0) || (rxBuf != (uint8_t *)0));
     switch (port) {
         case QT_PORT: {/* handle data from qt port */
@@ -317,7 +326,7 @@ void Controller::rxPacketEvent(TExternPort port,
 void Controller::handleServerCmd(uint8_t const * const rxBuf,
     uint16_t const rxLen)
 {
-    TCmdQueueNode cmd;
+    TPCmdQueueNode cmd;
     TProtocalQt const * const buf = (TProtocalQt *)rxBuf;
     TPSpeCmdFunc cmdFun;
     /* setting specific command func */
@@ -352,7 +361,7 @@ void Controller::handleServerCmd(uint8_t const * const rxBuf,
     /* match protocal command? */
     if (cmdFun != (TPSpeCmdFunc)0) {
         cmd = (TPCmdQueueNode)malloc(sizeof(TCmdQueueNode));
-        if (cmd != (TPCmdQueueNode)) {
+        if (cmd != (TPCmdQueueNode)0) {
             cmd->elem.type = USER_CMD;
             cmd->elem.user = SERVER_USER;
             cmd->elem.execStatus = NO_START;
@@ -373,7 +382,7 @@ void Controller::tickQtInflight(void) {
     TInflightCmd_pNode pos, n, p;
     TPCmdQueueNode pCurCmd;
     TPRequestNode pCurReq;
-    uint32_t wkCmdId, reState;
+    uint32_t wkCmdId;
     uint32_t notifyId;
     bool matchCmd;
     bool reqDone;
@@ -458,7 +467,8 @@ void Controller::timeTick_(void) {
 void Controller::callbackQt(uint32_t cmdId, uint32_t notifyId,
     uint32_t notifyFlag, uint8_t const * const rxBuf, uint16_t const rxLen)
 {
-    TProtocalQt *buf = (TProtocalQt *)rxBuf;
+    TProtocalQt const * const buf =
+            (TProtocalQt *)rxBuf;
     uint32_t reState;
     /* log callback */
     if (notifyFlag == NOTIFY_FLAG) {
@@ -474,6 +484,10 @@ void Controller::callbackQt(uint32_t cmdId, uint32_t notifyId,
             buf->cmd, buf->seq,
             buf->dataLen, reState);
     }
+    /* aviod unused */
+    (void)cmdId;
+    (void)notifyId;
+    (void)rxLen;
 }
 
 }

@@ -16,15 +16,7 @@
 ******************************************************************************
 * @endcond
 */
-
-#include "qpcpp.h"
-#include "list.h"
-#include "request.h"
-#include "ring_buffer.h"
-#include "extern_port.h"
-#include "command.h"
-#include "arcs.h"
-#include "bsp.h"
+#include "user.h"
 #include "mainwidget.h"
 
 //............................................................................

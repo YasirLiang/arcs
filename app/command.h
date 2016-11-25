@@ -96,7 +96,7 @@ void CmdQueue_init(TPCmdQueue root, int size);
 /*! CmdQueue_getSize--------------------------------------------------------*/
 int CmdQueue_getSize(TPCmdQueue root);
 /*! CmdQueue_nodeDestroy----------------------------------------------------*/
-void CmdQueue_nodeDestroy(TPCmdQueueNode tg);
+void CmdQueue_nodeDestroy(TPCmdQueueNode *tg);
 /*! Cmd_run-----------------------------------------------------------------*/
 void* Cmd_run(TPCmdQueueNode instance);
 

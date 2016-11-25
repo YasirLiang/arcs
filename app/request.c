@@ -17,7 +17,10 @@
 * @endcond
 */
 /*Including file------------------------------------------------------------*/
-
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include "list.h"
 #include "request.h"
 /*$ RequestList::addTrail().................................................*/
 void RequestList_addTrail(struct list_head *list, TPRequestNode nw) {
@@ -25,14 +28,14 @@ void RequestList_addTrail(struct list_head *list, TPRequestNode nw) {
 }
 /*$ RequestList::addTrail().................................................*/
 void RequestList_nodeInit(TPRequestNode n,TRequestElem *in) {
-    LIST_HEAD_INIT(&in->statusList);
+    INIT_LIST_HEAD(&in->statusList);
     n->in = in;
 }
 /*$ RequestList::statusListDestroy()........................................*/
 void RequestList_statusListDestroy(struct list_head *list) {
     TPRStatusNode p1, p2;
     list_for_each_entry_safe(p1, p2, list, list) {
-        __list_del_entry(p1);
+        __list_del_entry(&p1->list);
         /* release status element */
         if (p1->statusElem != (void *)0) {
             free(p1->statusElem);
@@ -48,7 +51,7 @@ void RequestList_destroy(struct list_head *head) {
     /*!release each */
     list_for_each_entry_safe(pos, n, head, list) {
         /* Delect node from list */
-         __list_del_entry(pos);
+         __list_del_entry(&pos->list);
         /* release status node */
         RequestList_statusListDestroy(&pos->in->statusList);
         pos->in = (TRequestElem*)0;
@@ -67,10 +70,11 @@ TPRequestNode RequestList_searchNode(struct list_head *list, uint32_t reqId) {
     TPRequestNode pos, work = (TPRequestNode)0;
     list_for_each_entry(pos, list, list) {
         /* in must pointer request node elememt */
-        Q_ASSERT(pos->in != (TRequestElem *)0);
-        if (pos->in->id == reqId) {
-            work = pos;
-            break;
+        if (pos->in != (TRequestElem *)0) {
+            if (pos->in->id == reqId) {
+                work = pos;
+                break;
+            }
         }
     }
     /* return value */
@@ -78,9 +82,9 @@ TPRequestNode RequestList_searchNode(struct list_head *list, uint32_t reqId) {
 }
 /*$ RequestStatusList::nodeInsert().........................................*/
 void RequestStatusList_nodeInsert(TPRequestNode reqNode,
-    TRStatusNode const _staNode)
+    TPRStatusNode const _staNode)
 {
-    list_add_tail(_staNode, &reqNode->in->statusList);
+    list_add_tail(&_staNode->list, &reqNode->in->statusList);
 }
 /*$ Request::saveStatusToList...............................................*/
 void Request_saveStatusToList(TEHandledType hType, uint8_t type,

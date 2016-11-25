@@ -16,6 +16,10 @@
 ******************************************************************************
 * @endcond
 */
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include "usertimer.h"
 #include "inflight.h"
 /*! Inflight_nodeCreate.....................................................*/
 TInflightCmdNode * Inflight_nodeCreate(uint16_t seqId, uint32_t cmdId,
@@ -76,11 +80,10 @@ void Inflight_nodeDestroy(TInflightCmd_pNode *pDtyNode) {
 }
 /*! Inflight_startTimer.....................................................*/
 void Inflight_startTimer(TInflightCmd_pNode const pNode) {
-    pNode->timerCnt++;
-    userTimerstart(pNode->cmdTimeoutMs, &pNode->timer);
+    userTimerStart(pNode->cmdTimeoutMs, &pNode->timer);
 }
 /*! Inflight_frame..........................................................*/
-uint8_t * const  Inflight_frame(TInflightCmd_pNode const pNode) {
+uint8_t* Inflight_frame(TInflightCmd_pNode const pNode) {
     return pNode->pBuf;
 }
 /*! Inflight_notificationFlag...............................................*/
@@ -89,13 +92,13 @@ uint32_t Inflight_notificationFlag(TInflightCmd_pNode const pNode) {
 }
 /*! Inflight_timeout........................................................*/
 bool Inflight_timeout(TInflightCmd_pNode const pNode) {
-    return userTimertimeout(&pNode->timer);
+    return userTimerTimeout(&pNode->timer);
 }
 /*! Inflight_retried........................................................*/
 bool Inflight_retried(TInflightCmd_pNode const pNode) {
     return (pNode->timerCnt >= pNode->cntTime);
 }
-/*! Inflight_retried........................................................*/
+/*! Inflight_increaseSendCnt................................................*/
 bool Inflight_increaseSendCnt(TInflightCmd_pNode const pNode) {
     return pNode->timerCnt++;
 }
@@ -110,7 +113,7 @@ TInflightCmd_pNode Inflight_searchSeq(struct list_head *head, uint16_t seq) {
     return (TInflightCmd_pNode)0;
 }
 
-/*! Inflight_searchRequest......................................................*/
+/*! Inflight_searchReq......................................................*/
 TInflightCmd_pNode Inflight_searchReq(struct list_head *head, uint32_t req) {
     TInflightCmd_pNode pos;
     list_for_each_entry(pos, head, list) {

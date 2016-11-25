@@ -16,7 +16,8 @@
 ******************************************************************************
 * @endcond
 */
-#include "requestproccessor.h"
+#include "user.h"
+#include "commander.h"
 
 namespace ARCS {
 
@@ -33,9 +34,9 @@ QP::QMState const Commander::active_s = {
 QP::QMState const Commander::serving_s = {
     static_cast<QP::QMState const *>(0), /* superstate (top) */
     Q_STATE_CAST(&serving), /* state handle active*/
-    Q_STATE_CAST(0), /* entry action */
-    Q_STATE_CAST(0), /* exit action */
-    Q_STATE_CAST(0) /* no initial action */
+    Q_ACTION_CAST(0), /* entry action */
+    Q_ACTION_CAST(0), /* exit action */
+    Q_ACTION_CAST(0) /* no initial action */
 };
 
 QP::QMState const Commander::idle_s = {
@@ -66,11 +67,7 @@ void Commander_updateCurrentReq(uint32_t req) {
 }
 /*Commander().......................................................*/
 Commander::Commander()
-  : QMsm(Q_STATE_CAST(&Commander::initial)),
-    commandId((uint32_t)0),
-    curECmdId((uint32_t)0),
-    reqId((uint32_t)0),
-    curEReqId((uint32_t)0)
+  : QMsm(Q_STATE_CAST(&Commander::initial))
 {
     /* get commander msm */
     reQ = Requestor_getMsm();
@@ -78,7 +75,7 @@ Commander::Commander()
     CmdQueue_init(&cmdQueue, (int)150);
 }
 /*initial().......................................................*/
-QP::State Commander::initial(Commander * const me,
+QP::QState Commander::initial(Commander * const me,
         QP::QEvt const * const e)
 {
     static QP::QMTranActTable const table_ = {/* transition-action table */
@@ -89,6 +86,8 @@ QP::State Commander::initial(Commander * const me,
     };
     /* initial msm */
     reQ->init();
+    /* avoid not used */
+    (void)e;
     /* tran state table */
     return QM_TRAN_INIT(&table_);
 }
@@ -113,10 +112,12 @@ QP::QState Commander::active(Commander * const me,
     };
     switch (e->sig) {
         case COMMAND_SIG: {
-            cmdQNode = (static_cast<CommandEvt*>e)->em;
-            Q_ASSERT(cmdQNode != (TPCmdQueueNode)0);
+            cmdQNode = (static_cast<CommandEvt const * const>(e))->em;
+            Q_ASSERT((TPCmdQueueNode)cmdQNode != (TPCmdQueueNode)0);
             /* push to command queue */
-            if (0 == CmdQueue_push(cmdQueue, cmdQNode)) {
+            if (0 == CmdQueue_push((TPCmdQueue)&cmdQueue,
+                    cmdQNode))
+            {
                 /* successful push */
                 qDebug("[Command %d push Queue successful]",
                     cmdQNode->elem.id);
@@ -131,7 +132,8 @@ QP::QState Commander::active(Commander * const me,
         case REQUEST_DONE_SIG: {
             /* proccessing other command will faild */
             Q_ASSERT(curWorkQnode != (TPCmdQueueNode)0
-                && (static_cast<RequestDoneEvt*>e)->rId != curEReqId);
+                && (static_cast<RequestDoneEvt const * const >(e))->rId\
+                    != curEReqId);
             RequestDoneEvt er(curEReqId);
             reQ->dispatch(&er);
             /* User will make sure current executable command
@@ -144,7 +146,7 @@ QP::QState Commander::active(Commander * const me,
             if (pReqElem != (TRequestElem*)0) {
                 /* command is not finishing, allot for request node */
                 Q_ASSERT(curWorkQnode->elem.execStatus == REQUEST_EXECUTING);
-                pReq = (TPRequestNode)malloc(sizeof(TPRequestNode));
+                pReq = (TPRequestNode)malloc(sizeof(TRequestNode));
                 if (pReq != (TPRequestNode)0) {
                     /* initial request node */
                     RequestList_nodeInit(pReq, pReqElem);
@@ -184,7 +186,7 @@ QP::QState Commander::active(Commander * const me,
                     }
                 }
                 else {/* error space to for request */
-                    Q_ASSERT(pReq != (TRequestElem*)0);
+                    Q_ASSERT(pReq != (TPRequestNode)0);
                 }
             }
             else if (curWorkQnode->elem.execStatus == EXEC_SUCCESS) {
@@ -219,14 +221,18 @@ QP::QState Commander::active(Commander * const me,
 }
 /*active_e()................................................................*/
 QP::QState Commander::active_e(Commander * const me) {
+    /* avoid unused */
+    (void)me;
     return QM_ENTRY(&active_s);
 }
 /*active_x()................................................................*/
 QP::QState Commander::active_x(Commander * const me) {
+    /* avoid unused */
+    (void)me;
     return QM_EXIT(&active_s);
 }
 /*idle()....................................................................*/
-QP::State Commander::idle(Commander * const me,
+QP::QState Commander::idle(Commander * const me,
     QP::QEvt const * const e)
 {
     QP::QState status_;
@@ -246,7 +252,7 @@ QP::State Commander::idle(Commander * const me,
                 }
             };
            /* get command node */
-           curWorkQnode = (static_cast<CommandEvt*>e)->em;
+           curWorkQnode = (static_cast<CommandEvt const * const>(e))->em;
            Q_ASSERT(curWorkQnode != (TPCmdQueueNode)0);
             /* directly excecut Command function and don't need
                 to push to command working queue */
@@ -254,7 +260,7 @@ QP::State Commander::idle(Commander * const me,
             if (pReqElem != (TRequestElem*)0) {/* local generate request */
                 Q_ASSERT(curWorkQnode->elem.execStatus == REQUEST_EXECUTING);
                 /* command is not finishing, allot for request node */
-                pReq = (TPRequestNode)malloc(sizeof(TPRequestNode));
+                pReq = (TPRequestNode)malloc(sizeof(TRequestNode));
                 if (pReq != (TPRequestNode)0) {
                     /* initial request node */
                     RequestList_nodeInit(pReq, pReqElem);
@@ -274,7 +280,7 @@ QP::State Commander::idle(Commander * const me,
                          don't need to change state */
                     if (curWorkQnode->elem.execStatus == EXEC_SUCCESS) {
                         list_ = &curWorkQnode->elem.requestHead;
-                        RequestList_destroy(&list_);
+                        RequestList_destroy(list_);
                         /* release commander status list */
                         list_ = &curWorkQnode->elem.statusList;
                         RequestList_statusListDestroy(list_);
@@ -289,14 +295,14 @@ QP::State Commander::idle(Commander * const me,
                     }
                 }
                 else {/* error space to for request */
-                    Q_ASSERT(pReq != (TRequestElem*)0);
+                    Q_ASSERT(pReq != (TPRequestNode)0);
                 }
             }
             else if (curWorkQnode->elem.execStatus == EXEC_SUCCESS) {
             /* current command be finished, user make decision to
                 execute success!*/
                 list_ = &curWorkQnode->elem.requestHead;
-                RequestList_destroy(&list_);
+                RequestList_destroy(list_);
                 /* release commander status list */
                 list_ = &curWorkQnode->elem.statusList;
                 RequestList_statusListDestroy(list_);
@@ -319,15 +325,19 @@ QP::State Commander::idle(Commander * const me,
     return status_;
 }
 /*idle_e()..................................................................*/
-QP::State Commander::idle_e(Commander * const me) {
+QP::QState Commander::idle_e(Commander * const me) {
+    /* avoid unused */
+    (void)me;
     return QM_ENTRY(&idle_s);
 }
 /*idle_x()..................................................................*/
-QP::State Commander::idle_x(Commander * const me) {
+QP::QState Commander::idle_x(Commander * const me) {
+    /* avoid unused */
+    (void)me;
     return QM_EXIT(&idle_s);
 }
 /*serving().................................................................*/
-QP::State Commander::serving(Commander * const me,
+QP::QState Commander::serving(Commander * const me,
     QP::QEvt const * const e)
 {
     QP::QState status_;
@@ -337,6 +347,8 @@ QP::State Commander::serving(Commander * const me,
             break;
         }
     }
+    /* avoid unused */
+    (void)me;
     return status_;
 }
 /*$ Commander::requestRun().................................................*/
@@ -354,7 +366,7 @@ void Commander::requestRun(void) {
     if (pReqElem != (TRequestElem*)0) {
         /* command is not finishing, allot for request node */
         Q_ASSERT(curWorkQnode->elem.execStatus == REQUEST_EXECUTING);
-        pReq = (TPRequestNode)malloc(sizeof(TPRequestNode));
+        pReq = (TPRequestNode)malloc(sizeof(TRequestNode));
         if (pReq != (TPRequestNode)0) {
             /* initial request node */
             RequestList_nodeInit(pReq, pReqElem);
@@ -362,7 +374,7 @@ void Commander::requestRun(void) {
             RequestList_addTrail(&curWorkQnode->elem.requestHead,
                 pReq);
             /* publish new request to requester */
-            RequestElemEvt e_(REQUEST_ELEM_SIG, pReqElem);
+            RequestElemEvt e_(pReqElem);
             reQ->dispatch(&e_);
             /* update current executable request id */
             curEReqId = pReqElem->id;
@@ -375,7 +387,7 @@ void Commander::requestRun(void) {
             }
         }
         else {/* error space to for request */
-            Q_ASSERT(pReq != (TRequestElem*)0);
+            Q_ASSERT(pReq != (TPRequestNode)0);
         }
     }
 }
@@ -402,7 +414,7 @@ void Commander::queueCmdRun(void) {
         if (pReqElem != (TRequestElem*)0) {
             /* command is not finishing, allot for request node */
             Q_ASSERT(curWorkQnode->elem.execStatus == REQUEST_EXECUTING);
-            pReq = (TPRequestNode)malloc(sizeof(TPRequestNode));
+            pReq = (TPRequestNode)malloc(sizeof(TRequestNode));
             if (pReq != (TPRequestNode)0) {
                 /* initial request node */
                 RequestList_nodeInit(pReq, pReqElem);
@@ -410,7 +422,7 @@ void Commander::queueCmdRun(void) {
                 RequestList_addTrail(&curWorkQnode->elem.requestHead,
                     pReq);
                 /* publish new request to requester */
-                RequestElemEvt e(REQUEST_ELEM_SIG, pReqElem);
+                RequestElemEvt e(pReqElem);
                 reQ->dispatch(&e);
                 /* update current executable request id */
                 curEReqId = pReqElem->id;
@@ -429,7 +441,7 @@ void Commander::queueCmdRun(void) {
                 }
             }
             else {/* error space to for request */
-                Q_ASSERT(pReq != (TRequestElem*)0);
+                Q_ASSERT(pReq != (TPRequestNode)0);
             }
         }
         else if (curWorkQnode->elem.execStatus == EXEC_SUCCESS) {

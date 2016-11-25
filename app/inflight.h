@@ -44,15 +44,16 @@ TInflightCmdNode * Inflight_nodeCreate(uint16_t seqId,uint32_t cmdId,
     uint16_t dataLen, uint32_t notifyId, uint32_t notifyFlag,
     uint32_t timeoutMs, uint32_t cntTime, uint8_t *pBuf);
 /*! Inflight_nodeInsert-----------------------------------------------------*/
-void Inflight_nodeInsertTail(struct list_head *pInNode, struct list_head *head);
+void Inflight_nodeInsertTail(TInflightCmd_pNode pInNode,
+    struct list_head *head);
 /*! Inflight_nodeDelect-----------------------------------------------------*/
-void Inflight_nodeDelect(struct list_head *pDelNode);
+void Inflight_nodeDelect(TInflightCmd_pNode pDelNode);
 /*! Inflight_nodeDestroy----------------------------------------------------*/
 void Inflight_nodeDestroy(TInflightCmd_pNode *pDtyNode);
 /*! Inflight_startTimer-----------------------------------------------------*/
 void Inflight_startTimer(TInflightCmd_pNode const pNode);
 /*! Inflight_frame----------------------------------------------------------*/
-uint8_t * const  Inflight_frame(TInflightCmd_pNode const pNode);
+uint8_t* Inflight_frame(TInflightCmd_pNode const pNode);
 /*! Inflight_notificationFlag-----------------------------------------------*/
 uint32_t Inflight_notificationFlag(TInflightCmd_pNode const pNode);
 /*! Inflight_timeout-------------------------------------------------------*/
@@ -61,6 +62,11 @@ bool Inflight_timeout(TInflightCmd_pNode const pNode);
 bool Inflight_retried(TInflightCmd_pNode const pNode);
 /*! Inflight_searchSeq------------------------------------------------------*/
 TInflightCmd_pNode Inflight_searchSeq(struct list_head *head, uint16_t seq);
+/*! Inflight_increaseSendCnt------------------------------------------------*/
+bool Inflight_increaseSendCnt(TInflightCmd_pNode const pNode);
+/*! Inflight_searchReq------------------------------------------------------*/
+TInflightCmd_pNode Inflight_searchReq(struct list_head *head, uint32_t req);
+
 #ifdef __cplusplus
 } /*end extern "C" */
 #endif /* __cplusplus */

@@ -29,32 +29,34 @@ enum {
 class Controller : public QP::GuiQMActive {
 private:
     /*! commander QMsm */
-    QP::QMsm *commander;
+    static QP::QMsm *commander;
     /*! local command id generate */
-    uint32_t lcmdId;
-    /*! local request id generate */
-    uint32_t requstId;
+    static uint32_t lcmdId;
     /* 1ms time out event */
     QP::QTimeEvt m_timeEvt;
-    void Controller::timeTick_(void);
-    uint32_t getNextCmd(void);
-    void callbackQt(uint32_t cmdId, uint32_t notifyId,
+    static void timeTick_(void);
+    static uint32_t getNextCmd(void);
+public:
+    /*! local request id generate */
+    uint32_t requstId;
+    /*! Inflight double list array */
+    static struct list_head inflight[INFLIGHT_NUM];
+    Controller();
+    static void tickQtInflight(void);
+    static int serverDataHandle(uint8_t const * const rxBuf,
+        uint16_t const rxLen, uint32_t &notifyId, uint32_t &cmdId);
+    static void handleServerCmd(uint8_t const * const rxBuf,
+        uint16_t const rxLen);
+    static void callbackQt(uint32_t cmdId, uint32_t notifyId,
         uint32_t notifyFlag, uint8_t const * const rxBuf,
         uint16_t const rxLen);
-    void handleServerCmd(uint8_t const * const rxBuf,
-        uint16_t const rxLen);
-    void rxPacketEvent(TExternPort port,
+    static void rxPacketEvent(TExternPort port,
         uint8_t const * const rxBuf, uint16_t const dataLen);
-    int serverDataHandle(uint8_t const * const rxBuf,
-        uint16_t const rxLen, uint32_t &notifyId, uint32_t &cmdId);
-public:
-    /*! Inflight double list array */
-    struct list_head inflight[INFLIGHT_NUM];
-    Controller();
 protected:
     static QP::QMState const active_s; 
     static QP::QMState const serving_s;
-    static QP::QState active(Controller * const me);
+    static QP::QState active(Controller * const me,
+        QP::QEvt const * const e);
     static QP::QState initial(Controller * const me,
         QP::QEvt const * const e);
     static QP::QState serving(Controller * const me,

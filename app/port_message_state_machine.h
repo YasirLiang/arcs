@@ -22,15 +22,14 @@
 namespace ARCS {
 
 class PortMsgStateMachine : public  QP::QMsm {
-private:
-    #define PORT_BUF_SIZE 1536
+public:
+    #define ETPORT_BUF_SIZE 1536
     /*! Extern port virtual table */
     TExternPortVtbl const *vptr;
     /*! Recieve Buffer */
-    uint8_t recvBuf[PORT_BUF_SIZE];
+    uint8_t recvBuf[ETPORT_BUF_SIZE];
     /*! ring buffer pointer of Port */
     TCharRingBuf *pRingBuf;
-public:
     PortMsgStateMachine();
 protected:
     static QP::QMState const active_s;
@@ -50,7 +49,7 @@ protected:
     static QP::QState idle_e(PortMsgStateMachine * const me);
     static QP::QState idle_x(PortMsgStateMachine *const me);
     static QP::QState wait(PortMsgStateMachine * const me,
-        QP::QEvt const * const me);
+        QP::QEvt const * const e);
     static QP::QState wait_e(PortMsgStateMachine * const me);
     static QP::QState wait_x(PortMsgStateMachine * const me);
 };

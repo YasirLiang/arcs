@@ -597,7 +597,6 @@ private:
 //****************************************************************************
 // Provide the constructor for the QEvt class?
 #ifdef Q_EVT_CTOR
-
     #define Q_NEW(evtT_, sig_, ...) \
         (new(QP::QF::newX_(static_cast<uint_fast16_t>(sizeof(evtT_)), \
                      static_cast<uint_fast16_t>(0), static_cast<enum_t>(0))) \

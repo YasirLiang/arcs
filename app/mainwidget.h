@@ -20,6 +20,7 @@
 #define __MAIN_WIDGET_H__
 
 /*! Including file----------------------------------------------------------*/
+#include "user.h"
 #include "ui_mainwidget.h"
 
 /*! class MainSurface */
@@ -52,9 +53,7 @@ private:
     uint16_t queryAddr;
     uint16_t curAddr;
     uint16_t curId;
-    static ARCS::RequestEvt e(ARCS::REQUEST_SIG,
-                (uint32_t)0, (TRequestType)0,
-                (uint8_t *)0, (uint16_t)0, QT_REQUEST);
+    static ARCS::RequestEvt e;
 private slots:
     void add(void);
     void begin(void);

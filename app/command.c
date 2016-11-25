@@ -17,8 +17,11 @@
 * @endcond
 */
 /*Including file------------------------------------------------------------*/
-#include "circular_link_queue.h"
-#include "command_queue.h"
+#include <stdint.h>
+#include <stdlib.h>
+#include "list.h"
+#include "request.h"
+#include "command.h"
 
 /*! CmdQueue_getValue.......................................................*/
 TPCmdQueueNode CmdQueue_getValue(TPCmdQueue root) {
@@ -65,7 +68,7 @@ int CmdQueue_getCount(TPCmdQueue root) {
 }
 /*! CmdQueue_elemInitial....................................................*/
 void CmdQueue_elemInitial(TCmdQElem *elem) {
-    
+    (void)elem;
 }
 /*! CmdQueue_nodeDestroy....................................................*/
 void CmdQueue_nodeDestroy(TPCmdQueueNode *tg) {

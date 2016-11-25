@@ -148,7 +148,7 @@ public:
     //! return the fixed block-size of the blocks managed by this pool
     QMPoolSize getBlockSize(void) const {
         return m_blockSize;
-    }Q_NEW_X(e_, evtT_, margin_, sig_)
+    }
 
 private:
     QMPool(QMPool const &);            //!< disallow copying of QMPools

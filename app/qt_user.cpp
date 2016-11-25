@@ -17,7 +17,13 @@
 * @endcond
 */
 /*Including-----------------------------------------------------------------*/
+#include "user.h"
 #include "protocal_qt.h"
+#include "usertimer.h"
+#include "inflight.h"
+#include "qt_user.h"
+#include <QtWidgets>
+#include "mainwidget.h"
 /*local variable of current command-----------------------------------------*/
 static uint32_t l_curCmd;
 static uint16_t l_seqNum;
@@ -43,11 +49,11 @@ void* QtCmd_queryId(struct TCmdQElem *pElem) {
         reqId = ARCS::Controller_getNextReqId();
         pi = Inflight_nodeCreate(buf.seq, cmd,
             bufLen, reqId, ARCS::NOTIFY_FLAG,
-            (uint32_t)100, (uint32_t)3, (uint8_t*)buf);
+            (uint32_t)100, (uint32_t)3, (uint8_t *)&buf);
         if (pi != (TInflightCmd_pNode)0) {
             Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
             QP::QF::PUBLISH(Q_NEW(ARCS::TransmitEvt,
-                ARCS::QT_PORT, bufLen, (uint8_t *)buf), (void*)0);
+                ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
             pElem->execStatus = COMMAND_EXECUTING;
             /* when no real request node generate, must update
                  commander request id after get next request id */
@@ -92,11 +98,11 @@ void* QtCmd_switchMatrix(struct TCmdQElem *pElem) {
         reqId = ARCS::Controller_getNextReqId();
         pi = Inflight_nodeCreate(buf.seq, cmd,
             bufLen, reqId, ARCS::NOTIFY_FLAG,
-            (uint32_t)100, (uint32_t)3, (uint8_t*)buf);
+            (uint32_t)100, (uint32_t)3, (uint8_t *)&buf);
         if (pi != (TInflightCmd_pNode)0) {
             Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
             QP::QF::PUBLISH(Q_NEW(ARCS::TransmitEvt,
-                ARCS::QT_PORT, bufLen, (uint8_t *)buf), (void*)0);
+                ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
             pElem->execStatus = COMMAND_EXECUTING;
             /* when no real request node generate, must update
                  commander request id after get next request id */
@@ -141,11 +147,11 @@ void* QtCmd_optTerminal(struct TCmdQElem *pElem) {
         reqId = ARCS::Controller_getNextReqId();
         pi = Inflight_nodeCreate(buf.seq, cmd,
             bufLen, reqId, ARCS::NOTIFY_FLAG,
-            (uint32_t)100, (uint32_t)3, (uint8_t*)buf);
+            (uint32_t)100, (uint32_t)3, (uint8_t *)&buf);
         if (pi != (TInflightCmd_pNode)0) {
             Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
             QP::QF::PUBLISH(Q_NEW(ARCS::TransmitEvt,
-                ARCS::QT_PORT, bufLen, (uint8_t *)buf), (void*)0);
+                ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
             pElem->execStatus = COMMAND_EXECUTING;
             /* when no real request node generate, must update
                  commander request id after get next request id */
@@ -221,11 +227,11 @@ void* QtCmd_setTerminalSys(struct TCmdQElem *pElem) {
         reqId = ARCS::Controller_getNextReqId();
         pi = Inflight_nodeCreate(buf.seq, cmd,
             bufLen, reqId, ARCS::NOTIFY_FLAG,
-            (uint32_t)100, (uint32_t)3, (uint8_t*)buf);
+            (uint32_t)100, (uint32_t)3, (uint8_t *)&buf);
         if (pi != (TInflightCmd_pNode)0) {
             Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
             QP::QF::PUBLISH(Q_NEW(ARCS::TransmitEvt,
-                ARCS::QT_PORT, bufLen, (uint8_t *)buf), (void*)0);
+                ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
             pElem->execStatus = COMMAND_EXECUTING;
             /* when no real request node generate, must update
                  commander request id after get next request id */
@@ -271,11 +277,11 @@ void* QtCmd_cameraControl(struct TCmdQElem *pElem) {
         reqId = ARCS::Controller_getNextReqId();
         pi = Inflight_nodeCreate(buf.seq, cmd,
             bufLen, reqId, ARCS::NOTIFY_FLAG,
-            (uint32_t)100, (uint32_t)3, (uint8_t*)buf);
+            (uint32_t)100, (uint32_t)3, (uint8_t *)&buf);
         if (pi != (TInflightCmd_pNode)0) {
             Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
             QP::QF::PUBLISH(Q_NEW(ARCS::TransmitEvt,
-                ARCS::QT_PORT, bufLen, (uint8_t *)buf), (void*)0);
+                ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
             pElem->execStatus = COMMAND_EXECUTING;
             /* when no real request node generate, must update
                  commander request id after get next request id */
@@ -332,7 +338,7 @@ void* ServerCmd_queryId(struct TCmdQElem *pElem) {
             memcpy(buf.dataBuf, pElem->cmdBuf, buf.dataLen);
             bufLen = buf.dataLen + PRO_COMMON_LEN;
             QP::QF::PUBLISH(Q_NEW(ARCS::TransmitEvt,
-                ARCS::QT_PORT, bufLen, (uint8_t *)buf), (void*)0);
+                ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
         }
         /* parser data */
         if (pBuf->type & PRO_REPORT_TYPE) {
@@ -346,68 +352,68 @@ void* ServerCmd_queryId(struct TCmdQElem *pElem) {
                     /* must not out of range */
                     Q_ASSERT(pos <= (PRO_QT_MAX - 78));
                     data = (TProtocalQtQueryData *)\
-                        pBuf->dataBuf[pos];
+                        &pBuf->dataBuf[pos];
                     
-                    avbStr.sprintf("0x%016llx", data.id_1722);
-                    nameStr.sprintf("%s", data.name);
-                    if (data.online) {
+                    avbStr.sprintf("0x%016llx", data->id_1722);
+                    nameStr.sprintf("%s", data->name);
+                    if (data->online) {
                         cnntStr.sprintf("%s", "C");/* Online */
                     }
                     else {
                         cnntStr.sprintf("%s", "D"); /* offline */
                     }
-                    cnntCountStr.sprintf("%d", data.cnntNum);
+                    cnntCountStr.sprintf("%d", data->cnntNum);
                     row = tableWidget->rowCount();        /* insert new row */
                     tableWidget->insertRow(row);
-                    if (data.avbIdentity) {/* host unit */
+                    if (data->avbIdentity) {/* host unit */
                         idStr.sprintf("%s", "无");
                         permisionStr.sprintf("%s", "host unit");
                     }
                     else {
-                        idStr.sprintf("%d", data.id);
-                        permisionStr.sprintf("%d", data.permision);
-                        if (data.micStatus == MIC_CLOSE) {
+                        idStr.sprintf("%d", data->id);
+                        permisionStr.sprintf("%d", data->permision);
+                        if (data->micStatus == MIC_CLOSE) {
                             micStr.sprintf("%s", "关闭");
                         }
-                        else if (data.micStatus == MIC_OPEN) {
+                        else if (data->micStatus == MIC_OPEN) {
                             micStr.sprintf("%s", "打开");
                         }
-                        else if (data.micStatus == MIC_FIRST_APPLY) {
+                        else if (data->micStatus == MIC_FIRST_APPLY) {
                             micStr.sprintf("%s", "首位申请");
                         }
-                        else if (data.micStatus == MIC_APPLY) {
+                        else if (data->micStatus == MIC_APPLY) {
                             micStr.sprintf("%s", "其他申请");
                         }
                         else {
                             micStr.sprintf("%s", "wrong status");
                         }
 
-                        if (data.rgst) {
+                        if (data->rgst) {
                             rgstStr.sprintf("%s", "已报到");
                         }
                         else {
                             rgstStr.sprintf("%s", "未报到");
                         }
 
-                        if (data.sign) {
+                        if (data->sign) {
                             signStr.sprintf("%s", "已签到");
                         }
                         else {
                             signStr.sprintf("%s", "未签到");
                         }
-                        if (data.vote) {
+                        if (data->vote) {
                             voteStr.sprintf("%s", "已表决");
                         }
                         else {
                             voteStr.sprintf("%s", "未表决");
                         }
-                        if (data.select) {
+                        if (data->select) {
                             selStr.sprintf("%s", "已投票");
                         }
                         else {
                             selStr.sprintf("%s", "未投票");
                         }
-                        if (data.grade) {
+                        if (data->grade) {
                             gradeStr.sprintf("%s", "已评分");
                         }
                         else {

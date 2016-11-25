@@ -75,7 +75,7 @@ void Queue_push(TPQueue root, TPQueueNode node) {
 }
 /*! Queue_isEmpty...........................................................*/
 int Queue_isEmpty(TPQueue root) {
-    if (root == (TPQueueNode)0) {
+    if (root == (TPQueue)0) {
         return 1;
     }
     return ((root->head == (TPQueueNode)0)?(int)1:(int)0);

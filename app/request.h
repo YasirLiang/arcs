@@ -105,7 +105,23 @@ typedef struct TRequestNode {
     struct list_head list;       /*! double link list node */
 }TRequestNode, *TPRequestNode;
 /*! RequestList_addTrail----------------------------------------------------*/
-void RequestList_addTrail(struct list_head list, TPRequestNode nw);
+void RequestList_addTrail(struct list_head *list, TPRequestNode nw);
+/*! RequestList_nodeInit----------------------------------------------------*/
+void RequestList_nodeInit(TPRequestNode n,TRequestElem *in);
+/*! RequestList_statusListDestroy-------------------------------------------*/
+void RequestList_statusListDestroy(struct list_head *list);
+/*! RequestList_destroy-----------------------------------------------------*/
+void RequestList_destroy(struct list_head *head);
+/*! Request_run-------------------------------------------------------------*/
+int Request_run(TRequestElem * const pelem);
+/*! RequestList_searchNode--------------------------------------------------*/
+TPRequestNode RequestList_searchNode(struct list_head *list, uint32_t reqId);
+/*! RequestStatusList_nodeInsert--------------------------------------------*/
+void RequestStatusList_nodeInsert(TPRequestNode reqNode,
+    TPRStatusNode const _staNode);
+/*! Request_saveStatusToList------------------------------------------------*/
+void Request_saveStatusToList(TEHandledType hType, uint8_t type,
+    uint16_t subtype, uint32_t reStatus, struct list_head *statusList);
 
 #ifdef __cplusplus
 } /* end extern "C" */
