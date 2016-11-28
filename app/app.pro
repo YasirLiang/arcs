@@ -37,7 +37,6 @@ TEMPLATE = app
 QT      += core gui widgets sql network
 TARGET   = arcs-gui
 DEFINES += QT_NO_STATEMACHINE
-CONFIG += debug
 
 QPCPP = ../deplib/qpcpp
 
@@ -96,11 +95,6 @@ HEADERS += \
 FORMS += login.ui \
     mainwidget.ui \
     systemset.ui
-
-RESOURCES =
-
-RC_FILE =
-
 
 ##############################################################################
 # NOTE:

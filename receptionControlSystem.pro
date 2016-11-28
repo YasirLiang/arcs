@@ -8,7 +8,4 @@
 # QP framework is 5.7.3.
 
 TEMPLATE = subdirs
-
-LIBDIR = deplib/qpcpp/ports/qt/mingw
-
 SUBDIRS = app

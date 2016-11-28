@@ -45,6 +45,7 @@ TInflightCmdNode * Inflight_nodeCreate(uint16_t seqId, uint32_t cmdId,
         if (pNode->pBuf != (uint8_t *)0) {
             /* copy data */
             memcpy(pNode->pBuf, pBuf, dataLen);
+            userTimerStart(timeoutMs, &pNode->timer);
         }
         else {
             /* buffer malloc not success */
@@ -81,6 +82,13 @@ void Inflight_nodeDestroy(TInflightCmd_pNode *pDtyNode) {
 /*! Inflight_startTimer.....................................................*/
 void Inflight_startTimer(TInflightCmd_pNode const pNode) {
     userTimerStart(pNode->cmdTimeoutMs, &pNode->timer);
+}
+/*! Inflight_updateTimer....................................................*/
+void Inflight_updateTimer(TInflightCmd_pNode const pNode,
+    uint32_t timeMs)
+{
+    pNode->cmdTimeoutMs = timeMs;
+    userTimerStart(timeMs, &pNode->timer);
 }
 /*! Inflight_frame..........................................................*/
 uint8_t* Inflight_frame(TInflightCmd_pNode const pNode) {

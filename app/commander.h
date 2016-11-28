@@ -29,7 +29,6 @@ private:
     }qCmdExeStatus; /*!queue command execute status */
 public:
     uint32_t commandId; /*! allot for user or system command */
-    uint32_t curECmdId; /*! current excutable command id */
     uint32_t reqId; /*! current request id */
     uint32_t curEReqId; /*! current excutable request id */
     TPCmdQueueNode curWorkQnode; /*! curWorkQnode */

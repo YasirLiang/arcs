@@ -22,7 +22,6 @@
 #include "usertimer.h"
 #include "inflight.h"
 #include "qt_user.h"
-#include <QtWidgets>
 #include "mainwidget.h"
 /*local variable of current command-----------------------------------------*/
 static uint32_t l_curCmd;
@@ -30,7 +29,6 @@ static uint16_t l_seqNum;
 /*$ qt mainsurface query id command function................................*/
 void* QtCmd_queryId(struct TCmdQElem *pElem) {
     uint32_t cmd, reqId;
-    uint32_t req;
     uint16_t bufLen;
     TProtocalQt buf;
     TInflightCmd_pNode pi;
@@ -52,7 +50,7 @@ void* QtCmd_queryId(struct TCmdQElem *pElem) {
             (uint32_t)100, (uint32_t)3, (uint8_t *)&buf);
         if (pi != (TInflightCmd_pNode)0) {
             Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
-            QP::QF::PUBLISH(Q_NEW(ARCS::TransmitEvt,
+            ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
                 ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
             pElem->execStatus = COMMAND_EXECUTING;
             /* when no real request node generate, must update
@@ -60,6 +58,8 @@ void* QtCmd_queryId(struct TCmdQElem *pElem) {
             ARCS::Commander_updateCurrentReq(reqId);
             /* log executing command here */
             /* log cmd here */
+            qDebug("[Qt User %d Cmd(Req = %d) executing]",
+                    cmd, reqId);
         }
         else {
             /* log error here */
@@ -71,15 +71,17 @@ void* QtCmd_queryId(struct TCmdQElem *pElem) {
     else {
         /* set query command running successfully */
         pElem->execStatus = EXEC_SUCCESS;
-        
+        qDebug("[Qt User %d Cmd finish]",
+                    cmd);
         /* unlock ui */
         MainSurface::instance()->unLockUi();
     }
+    /* not generate request local default*/
+    return (void *)0;
 }
 /*$ */
 void* QtCmd_switchMatrix(struct TCmdQElem *pElem) {
     uint32_t cmd, reqId;
-    uint32_t req;
     uint16_t bufLen;
     TProtocalQt buf;
     TInflightCmd_pNode pi;
@@ -101,7 +103,7 @@ void* QtCmd_switchMatrix(struct TCmdQElem *pElem) {
             (uint32_t)100, (uint32_t)3, (uint8_t *)&buf);
         if (pi != (TInflightCmd_pNode)0) {
             Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
-            QP::QF::PUBLISH(Q_NEW(ARCS::TransmitEvt,
+            ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
                 ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
             pElem->execStatus = COMMAND_EXECUTING;
             /* when no real request node generate, must update
@@ -124,11 +126,12 @@ void* QtCmd_switchMatrix(struct TCmdQElem *pElem) {
         /* unlock ui */
         MainSurface::instance()->unLockUi();
     }
+    /* not generate request local default*/
+    return (void *)0;
 }
 /*$ */
 void* QtCmd_optTerminal(struct TCmdQElem *pElem) {
     uint32_t cmd, reqId;
-    uint32_t req;
     uint16_t bufLen;
     TProtocalQt buf;
     TInflightCmd_pNode pi;
@@ -150,7 +153,7 @@ void* QtCmd_optTerminal(struct TCmdQElem *pElem) {
             (uint32_t)100, (uint32_t)3, (uint8_t *)&buf);
         if (pi != (TInflightCmd_pNode)0) {
             Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
-            QP::QF::PUBLISH(Q_NEW(ARCS::TransmitEvt,
+            ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
                 ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
             pElem->execStatus = COMMAND_EXECUTING;
             /* when no real request node generate, must update
@@ -173,14 +176,16 @@ void* QtCmd_optTerminal(struct TCmdQElem *pElem) {
         /* unlock ui */
         MainSurface::instance()->unLockUi();
     }
+    /* not generate request local default*/
+    return (void *)0;
 }
 /*$ */
 void* QtCmd_setLocalSys(struct TCmdQElem *pElem) {
-    uint32_t cmd, reqId;
-    uint32_t req;
+    uint32_t cmd;
     uint16_t bufLen;
     /* assert 'NULL' pointer error */
     Q_ASSERT(pElem != (struct TCmdQElem *)0);
+    cmd = pElem->id;
     if (l_curCmd != cmd) {/* first run this command */
         l_curCmd = cmd;
         if ((pElem->cmdBuf[0] & 0x01) == 0) { /* for local */
@@ -189,7 +194,7 @@ void* QtCmd_setLocalSys(struct TCmdQElem *pElem) {
             }
             else if ((pElem->cmdBuf[0] & 0x7f) == 4) {/* change port */
                 bufLen = pElem->cmdBuf[1];
-                QP::QF::PUBLISH(Q_NEW(ARCS::PortChangeEvt,
+                ARCS::A0_Transmitor->POST(Q_NEW(ARCS::PortChangeEvt,
                 ARCS::QT_PORT, bufLen, pElem->cmdBuf + 2), (void*)0);
             }
             else {
@@ -204,11 +209,12 @@ void* QtCmd_setLocalSys(struct TCmdQElem *pElem) {
     else {
         pElem->execStatus = EXEC_SUCCESS;
     }
+    /* not generate request local default*/
+    return (void *)0;
 }
 /*$ */
 void* QtCmd_setTerminalSys(struct TCmdQElem *pElem) {
     uint32_t cmd, reqId;
-    uint32_t req;
     uint16_t bufLen;
     TProtocalQt buf;
     TInflightCmd_pNode pi;
@@ -230,7 +236,7 @@ void* QtCmd_setTerminalSys(struct TCmdQElem *pElem) {
             (uint32_t)100, (uint32_t)3, (uint8_t *)&buf);
         if (pi != (TInflightCmd_pNode)0) {
             Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
-            QP::QF::PUBLISH(Q_NEW(ARCS::TransmitEvt,
+            ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
                 ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
             pElem->execStatus = COMMAND_EXECUTING;
             /* when no real request node generate, must update
@@ -254,11 +260,12 @@ void* QtCmd_setTerminalSys(struct TCmdQElem *pElem) {
         /* unlock ui */
         MainSurface::instance()->unLockUi();
     }
+    /* not generate request local default*/
+    return (void *)0;
 }
 /*$ */
 void* QtCmd_cameraControl(struct TCmdQElem *pElem) {
     uint32_t cmd, reqId;
-    uint32_t req;
     uint16_t bufLen;
     TProtocalQt buf;
     TInflightCmd_pNode pi;
@@ -280,7 +287,7 @@ void* QtCmd_cameraControl(struct TCmdQElem *pElem) {
             (uint32_t)100, (uint32_t)3, (uint8_t *)&buf);
         if (pi != (TInflightCmd_pNode)0) {
             Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
-            QP::QF::PUBLISH(Q_NEW(ARCS::TransmitEvt,
+            ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
                 ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
             pElem->execStatus = COMMAND_EXECUTING;
             /* when no real request node generate, must update
@@ -304,11 +311,13 @@ void* QtCmd_cameraControl(struct TCmdQElem *pElem) {
         /* unlock ui */
         MainSurface::instance()->unLockUi();
     }
+    /* not generate request local default*/
+    return (void *)0;
 }
 
 /*$ Protocal command between server and ARCS */
 void* ServerCmd_queryId(struct TCmdQElem *pElem) {
-    uint32_t cmd, reqId;
+    uint32_t cmd;
     TProtocalQt buf, *pBuf;
     int row, i, tnum;
     uint16_t dataLen, pos;
@@ -324,6 +333,7 @@ void* ServerCmd_queryId(struct TCmdQElem *pElem) {
         *nameItem;
     QTableWidget *tableWidget;
     /* first run this command? */
+    cmd = pElem->id;
     if (l_curCmd != cmd) {
         /* set current running command */
         l_curCmd = cmd;
@@ -337,7 +347,7 @@ void* ServerCmd_queryId(struct TCmdQElem *pElem) {
             buf.dataLen = 0;
             memcpy(buf.dataBuf, pElem->cmdBuf, buf.dataLen);
             bufLen = buf.dataLen + PRO_COMMON_LEN;
-            QP::QF::PUBLISH(Q_NEW(ARCS::TransmitEvt,
+            ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
                 ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
         }
         /* parser data */
@@ -454,25 +464,35 @@ void* ServerCmd_queryId(struct TCmdQElem *pElem) {
         /* set query command running successfully */
         pElem->execStatus = EXEC_SUCCESS;
     }
+    /* not generate request local default*/
+    return (void *)0;
 }
 /*$ */
 void* ServerCmd_switchMatrix(struct TCmdQElem *pElem) {
     /* set command running successfully */
     pElem->execStatus = EXEC_SUCCESS;
+    /* not generate request local default*/
+    return (void *)0;
 }
 /*$ */
 void* ServerCmd_optTerminal(struct TCmdQElem *pElem) {
     /* set command running successfully */
     pElem->execStatus = EXEC_SUCCESS;
+    /* not generate request local default*/
+    return (void *)0;
 }
 /*$ */
 void* ServerCmd_setTerminalSys(struct TCmdQElem *pElem) {
     /* set command running successfully */
     pElem->execStatus = EXEC_SUCCESS;
+    /* not generate request local default*/
+    return (void *)0;
 }
 /*$ */
 void* ServerCmd_cameraControl(struct TCmdQElem *pElem) {
     /* set command running successfully */
     pElem->execStatus = EXEC_SUCCESS;
+    /* not generate request local default*/
+    return (void *)0;
 }
 

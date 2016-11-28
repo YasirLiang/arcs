@@ -78,6 +78,7 @@ Commander::Commander()
 QP::QState Commander::initial(Commander * const me,
         QP::QEvt const * const e)
 {
+    qDebug("Commander initial");
     static QP::QMTranActTable const table_ = {/* transition-action table */
         &idle_s,
         {
@@ -112,10 +113,11 @@ QP::QState Commander::active(Commander * const me,
     };
     switch (e->sig) {
         case COMMAND_SIG: {
+            qDebug("Commander(active) recieve COMMAND_SIG");
             cmdQNode = (static_cast<CommandEvt const * const>(e))->em;
             Q_ASSERT((TPCmdQueueNode)cmdQNode != (TPCmdQueueNode)0);
             /* push to command queue */
-            if (0 == CmdQueue_push((TPCmdQueue)&me->cmdQueue,
+            if (0 != CmdQueue_push(&me->cmdQueue,
                     cmdQNode))
             {
                 /* successful push */
@@ -130,10 +132,12 @@ QP::QState Commander::active(Commander * const me,
             break;
         }
         case REQUEST_DONE_SIG: {
+            qDebug("[Commander(active) recieve  REQUEST_DONE_SIG(%d)]",
+                me->curEReqId);
             /* proccessing other command will faild */
             Q_ASSERT(me->curWorkQnode != (TPCmdQueueNode)0
                 && (static_cast<RequestDoneEvt const * const >(e))->rId\
-                    != me->curEReqId);
+                    == me->curEReqId);
             RequestDoneEvt er(me->curEReqId);
             me->reQ->dispatch(&er);
             /* User will make sure current executable command
@@ -143,7 +147,9 @@ QP::QState Commander::active(Commander * const me,
                 all current work queue node space, including all
                 request information. */
             me->pReqElem = (TRequestElem *)Cmd_run(me->curWorkQnode);
-            if (me->pReqElem != (TRequestElem*)0) {
+            if ((me->pReqElem != (TRequestElem*)0)
+                  && (me->curWorkQnode->elem.execStatus
+                        == REQUEST_EXECUTING)) {
                 /* command is not finishing, allot for request node */
                 Q_ASSERT(me->curWorkQnode->elem.execStatus
                         == REQUEST_EXECUTING);
@@ -241,6 +247,7 @@ QP::QState Commander::idle(Commander * const me,
     struct list_head *list_;
     switch (e->sig) {
         case COMMAND_SIG: {
+            qDebug("[Commander(idle) recieve COMMAND_SIG]");
             static struct {
                 QP::QMState const *target;
                 QP::QActionHandler act[3];
@@ -252,15 +259,19 @@ QP::QState Commander::idle(Commander * const me,
                     Q_ACTION_CAST(0)  /* zero terminator */
                 }
             };
-           /* get command node */
-           me->curWorkQnode = (static_cast<CommandEvt const * const>(e))->em;
-           Q_ASSERT(me->curWorkQnode != (TPCmdQueueNode)0);
+            /* get command node */
+            me->curWorkQnode = (static_cast<CommandEvt const * const>(e))->em;
+            Q_ASSERT(me->curWorkQnode != (TPCmdQueueNode)0);
             /* directly excecut Command function and don't need
-                to push to command working queue */
+                 to push to command working queue */
             me->pReqElem = (TRequestElem *)Cmd_run(me->curWorkQnode);
-            if (me->pReqElem != (TRequestElem*)0) {/* local generate request */
-                Q_ASSERT(me->curWorkQnode->elem.execStatus
-                            == REQUEST_EXECUTING);
+            if ((me->pReqElem != (TRequestElem*)0)
+                  && (me->curWorkQnode->elem.execStatus
+                            == REQUEST_EXECUTING))
+            {
+                /* local generate request */
+                qDebug("[Command Requst Executing %d, %d]",
+                    me->curWorkQnode->elem.id, me->curEReqId);
                 /* command is not finishing, allot for request node */
                 pReq = (TPRequestNode)malloc(sizeof(TRequestNode));
                 if (pReq != (TPRequestNode)0) {
@@ -303,6 +314,8 @@ QP::QState Commander::idle(Commander * const me,
             else if (me->curWorkQnode->elem.execStatus == EXEC_SUCCESS) {
             /* current command be finished, user make decision to
                 execute success!*/
+                qDebug("[Command Finish %d, %d]",
+                    me->curWorkQnode->elem.id, me->curEReqId);
                 list_ = &me->curWorkQnode->elem.requestHead;
                 RequestList_destroy(list_);
                 /* release commander status list */
@@ -315,7 +328,10 @@ QP::QState Commander::idle(Commander * const me,
             }
             else {
                 /* other execStatus no need to do anything */
-                status_ = QM_SUPER();
+                qDebug("[%d Cmd(Req = %d) executing]",
+                    me->curWorkQnode->elem.id, me->curEReqId);
+                /* set active state to waiting for command finished */
+                status_ = QM_TRAN(&tatbl_);
             }
             break;
         }

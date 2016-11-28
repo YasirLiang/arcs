@@ -19,6 +19,7 @@
 /*Incluing file-------------------------------------------------------------*/
 #include <QtWidgets>
 #include "user.h"
+#include "systemset.h"
 #include "mainwidget.h"
 /*$ Class Local decralation-------------------------------------------------*/
 ARCS::RequestEvt MainSurface::e(ARCS::REQUEST_SIG,
@@ -28,7 +29,7 @@ ARCS::RequestEvt MainSurface::e(ARCS::REQUEST_SIG,
                     0U,
                     QT_REQUEST);
 /* Local mainsurface instance-----------------------------------------------*/
-static MainSurface * l_instance;
+static MainSurface *l_instance;
 /*MainSurface().............................................................*/
 MainSurface::MainSurface(QWidget *parent)
     : QWidget(parent)
@@ -36,10 +37,9 @@ MainSurface::MainSurface(QWidget *parent)
     int index;
     bool ok;
     QString s;
-
+    
     l_instance = this;
     setupUi(this);
-
     /* set current camera control type */
     index = cmrCtlTypeComboBox->currentIndex();
     if (index == 0) {/* focus */
@@ -119,7 +119,7 @@ MainSurface::MainSurface(QWidget *parent)
         this, SLOT(verticalSpeedDoTxtChange()));
     connect(cmrCtlTypeComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(cmrCtlTypeComboBoxValChanged()));
-    connect(cmrCtlTypeComboBox, SIGNAL(currentIndexChanged(int)),
+    connect(curcameraComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(curcameraComboBoxValChanged()));
      connect(optTypeComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(optTypeComboBoxValChanged()));
@@ -128,11 +128,16 @@ MainSurface::MainSurface(QWidget *parent)
      connect(optComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(inputComboBoxValChanged()));
      connect(inputComboBox, SIGNAL(currentIndexChanged(int)),
-        this, SLOT(optComboBoxValChanged()));
+        this, SLOT(inputComboBoxValChanged()));
      connect(outputComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(outputComboBoxValChanged()));
      connect(idComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(idComboBoxValChanged()));
+     sysDlg = new SystemSetDialog(this);
+}
+
+MainSurface::~MainSurface(void) {
+    delete sysDlg;
 }
 /*instance()................................................................*/
 MainSurface* MainSurface::instance(void) {
@@ -148,7 +153,7 @@ void MainSurface::unLockUi(void) {
 }
 /*add().....................................................................*/
 void MainSurface::add(void) {
-    if (uiLocked) {
+    if (!uiLocked) {
         /* current requestment id  will be setted in specific
             command function, so e.id not set here */
         e.type = CAMERA_CONTROL;
@@ -177,8 +182,8 @@ void MainSurface::add(void) {
             }
         }
         e.buflen = (uint8_t)4; /* four lenght */
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -219,8 +224,8 @@ void MainSurface::begin(void) {
                 return;
             }
         }
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -242,8 +247,8 @@ void MainSurface::cameraSwitch(void) {
         /* high 4 bits means operation code. one is control camera */
         e.buf[3] &= 0x00; /* switch camera control type */
         e.buflen = (uint8_t)4; /* four lenght */
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -273,8 +278,8 @@ void MainSurface::down(void) {
         /* high 4 bits means operation code. one is control camera */
         e.buf[3] &= 0x11; /* control down */
         e.buflen = (uint8_t)4; /* four lenght */
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* lock ui until last request being finished */
         lockUi();        
     }
@@ -296,8 +301,8 @@ void MainSurface::downLeft(void) {
         /* high 4 bits means operation code. one is control camera */
         e.buf[3] &= 0x16; /* control left down */
         e.buflen = (uint8_t)4; /* four lenght */
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -319,8 +324,8 @@ void MainSurface::downRight(void) {
         /* high 4 bits means operation code. one is control camera */
         e.buf[3] &= 0x17; /* control right down */
         e.buflen = (uint8_t)4; /* four lenght */
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -342,8 +347,8 @@ void MainSurface::left(void) {
         /* high 4 bits means operation code. one is control camera */
         e.buf[3] &= 0x12; /* control left down */
         e.buflen = (uint8_t)4; /* four lenght */
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -365,8 +370,8 @@ void MainSurface::right(void) {
         /* high 4 bits means operation code. one is control camera */
         e.buf[3] &= 0x13; /* control right down */
         e.buflen = (uint8_t)4; /* four lenght */
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -386,8 +391,8 @@ void MainSurface::matrixSwitch(void) {
         e.buf[0] |= ((curInput & 0x0f) << 0);
         e.buf[0] |= ((curOutput & 0x0f) << 4);
         e.buflen = (uint8_t)1;
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -428,8 +433,8 @@ void MainSurface::pause(void) {
                 return;
             }
         }
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -450,8 +455,8 @@ void MainSurface::query(void) {
         e.buf[0] |= (uint8_t)((curId & 0x00ff) >> 0U); /* low address */
         e.buf[1] |= (uint8_t)((curId & 0xff00) >> 8U); /* high address */
         e.buflen = (uint8_t)2; /* set buffer lenght */
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* clear table widget */
         qresultTableWidget->clear();
         /* lock ui until last request being finished */
@@ -493,8 +498,8 @@ void MainSurface::reduce(void) {
             }
         }
         e.buflen = (uint8_t)4; /* four lenght */
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -527,8 +532,8 @@ void MainSurface::regain(void) {
             }
         }
         e.buflen = (uint8_t)1;
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -585,8 +590,8 @@ void MainSurface::stop(void) {
                 return;
             }
         }
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -608,8 +613,8 @@ void MainSurface::up(void) {
         /* high 4 bits means operation code. one is control camera */
         e.buf[3] &= 0x10; /* control right down */
         e.buflen = (uint8_t)4; /* four lenght */
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -631,8 +636,8 @@ void MainSurface::upLeft(void) {
         /* high 4 bits means operation code. one is control camera */
         e.buf[3] &= 0x16; /* control right down */
         e.buflen = (uint8_t)4; /* four lenght */
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -654,8 +659,8 @@ void MainSurface::upRight(void) {
         /* high 4 bits means operation code. one is control camera */
         e.buf[3] &= 0x17; /* control right down */
         e.buflen = (uint8_t)4; /* four lenght */
-        /* post event to   RequestProccessor active object */
-        QP::QF::PUBLISH(&e, (void *)0);
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
         /* lock ui until last request being finished */
         lockUi();
     }

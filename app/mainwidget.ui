@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>MainWidget</class>
  <widget class="QWidget" name="MainWidget">
@@ -296,8 +296,6 @@
            </layout>
           </item>
          </layout>
-         <zorder></zorder>
-         <zorder></zorder>
         </widget>
        </item>
        <item>

@@ -61,8 +61,9 @@ Requestor::Requestor()
 QP::QState Requestor::initial(Requestor * const me,
         QP::QEvt const * const e)
 {
+    qDebug("Requestor initial");
     static QP::QMTranActTable const tatbl_ = { /* transition-action table */
-        &active_s,
+        &idle_s,
         {
             Q_ACTION_CAST(0)  /* zero terminator */
         }

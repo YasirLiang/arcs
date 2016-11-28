@@ -99,11 +99,15 @@ QP::QState Controller::active(Controller * const me,
 QP::QState Controller::initial(Controller * const me,
         QP::QEvt const * const e)
 {
-    static QP::QMTranActTable const table_ = {/* transition-action table */
-        &serving_s,
-        {
-            Q_ACTION_CAST(0)/* zero terminator */
-        }
+    static struct {
+            QP::QMState        const *target;
+            QP::QActionHandler const act[2];
+        } const table_ = {/* transition-action table */
+            &serving_s,
+            {
+                Q_ACTION_CAST(&serving_e),
+                Q_ACTION_CAST(0)/* zero terminator */
+            }
     };
     /* initial msm */
     commander->init();
@@ -121,6 +125,7 @@ QP::QState Controller::serving(Controller * const me,
     switch (e->sig) {
         case TICK_1MS_SIG: {
             status_ = QM_SUPER();
+            me->m_timeEvt.postIn(me, (QP::QTimeEvtCtr)1);
             break;
         }
         case TRANSMIT_SIG: {
@@ -132,6 +137,7 @@ QP::QState Controller::serving(Controller * const me,
             break;
         }
         case REQUEST_SIG: {
+            qDebug("Recieve Requst Sig");
             RequestEvt const * const e_ =
                     static_cast<RequestEvt const * const>(e);
             if (e_->user == QT_REQUEST) {
@@ -143,6 +149,8 @@ QP::QState Controller::serving(Controller * const me,
                     cmd->elem.id = l_contoller.getNextCmd();
                     /* request data length set */
                     cmd->elem.cmdBufLen = e_->buflen;
+                    INIT_LIST_HEAD(&cmd->elem.requestHead);
+                    INIT_LIST_HEAD(&cmd->elem.statusList);
                     if (e_->buflen > 0) {
                         /* set request data to cmd buffer */
                         memcpy(cmd->elem.cmdBuf, e_->buf, e_->buflen);
@@ -151,18 +159,27 @@ QP::QState Controller::serving(Controller * const me,
                         case QUERY_ID: {
                             cmd->elem.run = &QtCmd_queryId;
                             CommandEvt _e(cmd);
+                            qDebug("Dispatch to Cmd(Type = %d) to Commander(< %d?)",
+                                    e_->type,
+                                    QT_MAX_PUB);                            
                             commander->dispatch(&_e);
                             break;
                         }
                         case SWITCH_MATRIX: {
                             cmd->elem.run = &QtCmd_switchMatrix;
                             CommandEvt _e(cmd);
+                            qDebug("Dispatch to Cmd(Type = %d) to Commander(< %d?)",
+                                    e_->type,
+                                    QT_MAX_PUB);                            
                             commander->dispatch(&_e);
                             break;
                         }
                         case OPT_TERMINAL: {
                             cmd->elem.run = &QtCmd_optTerminal;
                             CommandEvt _e(cmd);
+                            qDebug("Dispatch to Cmd(Type = %d) to Commander(< %d?)",
+                                    e_->type,
+                                    QT_MAX_PUB);        
                             commander->dispatch(&_e);
                             break;
                         }
@@ -175,12 +192,18 @@ QP::QState Controller::serving(Controller * const me,
                                 cmd->elem.run = &QtCmd_setTerminalSys;
                             }
                             CommandEvt _e(cmd);
+                            qDebug("Dispatch to Cmd(Type = %d) to Commander(< %d?)",
+                                    e_->type,
+                                    QT_MAX_PUB);
                             commander->dispatch(&_e);
                             break;
                         }
                         case CAMERA_CONTROL: {
                             cmd->elem.run = &QtCmd_cameraControl;
                             CommandEvt _e(cmd);
+                            qDebug("Dispatch to Cmd(Type = %d) to Commander(< %d?)",
+                                    e_->type,
+                                    QT_MAX_PUB);
                             commander->dispatch(&_e);
                             break;
                         }
@@ -211,11 +234,13 @@ QP::QState Controller::serving(Controller * const me,
 }
 /*$ Controller::serving_e()................................................*/
 QP::QState Controller::serving_e(Controller * const me) {
+    qDebug("Controller serving entry");
     me->m_timeEvt.postIn(me, (QP::QTimeEvtCtr)1);
     return QM_ENTRY(&serving_s);
 }
 /*$ Controller::serving_x().................................................*/
 QP::QState Controller::serving_x(Controller * const me) {
+    qDebug("Controller serving exit");
     me->m_timeEvt.disarm();
     return QM_EXIT(&serving_s);
 }
@@ -454,10 +479,11 @@ void Controller::tickQtInflight(void) {
                 pCurCmd = (TPCmdQueueNode)0;
             }
             else { /* resend data */
-                QP::QF::PUBLISH(Q_NEW(ARCS::TransmitEvt,
+                ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
                         ARCS::QT_PORT, pos->dataLen, pos->pBuf),
                     (void*)0);
                 Inflight_increaseSendCnt(pos);
+                Inflight_updateTimer(pos, pos->cmdTimeoutMs);
                 qDebug("[ReSend %d, %d, %d, %d, %d]",
                     QT_INFLIGHT, pos->cmdSeqId,
                     pos->cmdId, pos->cmdNotificationId,

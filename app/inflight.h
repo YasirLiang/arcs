@@ -52,6 +52,8 @@ void Inflight_nodeDelect(TInflightCmd_pNode pDelNode);
 void Inflight_nodeDestroy(TInflightCmd_pNode *pDtyNode);
 /*! Inflight_startTimer-----------------------------------------------------*/
 void Inflight_startTimer(TInflightCmd_pNode const pNode);
+/*! Inflight_updateTimer----------------------------------------------------*/
+void Inflight_updateTimer(TInflightCmd_pNode const pNode, uint32_t timeMs);
 /*! Inflight_frame----------------------------------------------------------*/
 uint8_t* Inflight_frame(TInflightCmd_pNode const pNode);
 /*! Inflight_notificationFlag-----------------------------------------------*/

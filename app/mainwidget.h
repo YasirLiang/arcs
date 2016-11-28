@@ -28,11 +28,12 @@ class MainSurface : public QWidget, public Ui_MainWidget {
     Q_OBJECT
 public:
     MainSurface(QWidget * parent = 0);
+    ~MainSurface(void);
     static MainSurface *instance(void);
     void lockUi(void);
     void unLockUi(void);
+    class SystemSetDialog *sysDlg;
     static ARCS::RequestEvt e;
-
 private:
     bool uiLocked; /*it's setted to one until user's request is finished. */
     uint32_t requstId;

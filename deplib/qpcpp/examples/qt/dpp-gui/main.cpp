@@ -39,10 +39,10 @@
 
 //............................................................................
 static QP::QEvt const *l_philoQueueSto[N_PHILO][N_PHILO];
-static QP::QSubscrList l_subscrSto[ARCS::MAX_PUB_SIG];
+static QP::QSubscrList l_subscrSto[DPP::MAX_PUB_SIG];
 
 // storage for event pools...
-static QF_MPOOL_EL(DPP::TransmitEvt) l_smlPoolSto[2*N_PHILO];
+static QF_MPOOL_EL(DPP::TableEvt) l_smlPoolSto[2*N_PHILO];
 
 //............................................................................
 int main(int argc, char *argv[]) {

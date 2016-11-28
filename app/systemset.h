@@ -27,14 +27,6 @@
 class SystemSetDialog : public QDialog, public Ui_SysSetDialog {
     Q_OBJECT
 public:
-    SystemSetDialog(QWidget * parent = 0);
-    TExternPortVtbl vTable;
-    void setTcpSocket(char const * const pip,
-        int _port);
-    static void init_s(void);
-    static int send_s(void const * const, int);
-    static int recv_s(void * const, int);
-    static int destroy_s(void);
     uint8_t serialPort;
     static QString tcpIp;
     static int32_t tcpPort;
@@ -42,6 +34,15 @@ public:
     static uint8_t *datagram;
     static uint8_t avail;
     static ARCS::PortEvt qtCltRdEvt;
+    TExternPortVtbl vTable;
+    SystemSetDialog(QWidget * parent = 0);
+    void setTcpSocket(char const * const pip,
+        int _port);
+    static SystemSetDialog *instance(void);
+    static void init_s(void);
+    static int send_s(void const * const, int);
+    static int recv_s(void * const, int);
+    static int destroy_s(void);
 private slots:
     void changePass(void);
     void changePort(void);

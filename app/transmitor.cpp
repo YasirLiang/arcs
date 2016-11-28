@@ -83,12 +83,7 @@ Transmitor::Transmitor()
         /* get port state machine msm */
         port[i] = PortInflightStateMachine_getIns(i);
 #endif
-    }
-#ifdef INFLIGHT_PSM   
-    /* set port state machine virtual table */
-    PortInflightStateMachine_setPortVtbl(QtPortTcpSocket_getVtbl(),
-            QT_SV_EP);
-#endif
+    }    
 }
 /*$ Transmitor::active()....................................................*/
 bool Transmitor::initialRecvBufList(void) {
@@ -124,7 +119,11 @@ QP::QState Transmitor::initial(Transmitor * const me,
                 Q_ACTION_CAST(0)/* zero terminator */
             }
         };
-
+#ifdef INFLIGHT_PSM   
+    /* set port state machine virtual table */
+    PortInflightStateMachine_setMePortVtbl(QtPortTcpSocket_getVtbl(),
+            port[QT_SV_EP]);
+#endif        
     /* initial port state machine msm */
     for (uint8_t i = 0; i < EXTERN_PORT_NUM; ++i) {
         port[i]->init();

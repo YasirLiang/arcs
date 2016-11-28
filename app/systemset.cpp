@@ -21,7 +21,7 @@
 #include "user.h"
 #include "systemset.h"
 /*$ Local variable decrelation..............................................*/
-static SystemSetDialog l_sysSetDialog;
+static SystemSetDialog *l_sysSetDialog;
 /*$ Class Local decralation-------------------------------------------------*/
 ARCS::PortEvt SystemSetDialog::qtCltRdEvt(ARCS::PORTREADABLE_SIG,
     ARCS::QT_PORT,
@@ -33,18 +33,19 @@ uint8_t *SystemSetDialog::datagram;
 uint8_t SystemSetDialog::avail;
 /*$ QtPortTcpSocket_getVtbl()...............................................*/
 TExternPortVtbl const * QtPortTcpSocket_getVtbl(void) {
-    return &l_sysSetDialog.vTable;
+    return &l_sysSetDialog->vTable;
 }
 /*$ QtPortTcpSocket::setTcpSocket()..........................................*/
 void QtPortTcpSocket_setTcpSocket(char const * const pip,
     int _port)
 {
-    l_sysSetDialog.setTcpSocket(pip, _port);
+    l_sysSetDialog->setTcpSocket(pip, _port);
 }
 /*$ SystemSetDialog::SystemSetDialog()......................................*/
 SystemSetDialog::SystemSetDialog(QWidget * parent)
     : QDialog(parent)
 {
+    l_sysSetDialog = this;
     setupUi(this);
     
     vTable.init = &init_s;
@@ -69,7 +70,7 @@ void SystemSetDialog::displayError(QAbstractSocket::SocketError socketErr) {
     }
 
     QMessageBox::information(this,
-        "网络产生如下错误:",
+        "NetWork Error:",
         tcpClient.errorString());
     tcpClient.close();
     avail = 0;

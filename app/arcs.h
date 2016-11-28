@@ -118,8 +118,7 @@ public:
         buflen(len)
     {
         memset(buf, 0, REQUEST_BUF_SIZE);/* reset memery */
-        Q_ASSERT(buflen <= REQUEST_BUF_SIZE);
-        if ((buflen != 0U) &&
+        if ((buflen <= REQUEST_BUF_SIZE) &&
              (p != (uint8_t *)0))
         {
             memcpy(buf, p, buflen); /* copy data */
@@ -150,8 +149,6 @@ public:
         datalen(len)
     {
         memset(buf, 0, PORT_BUF_SIZE); /* reset memery */
-        Q_ASSERT((datalen <= PORT_BUF_SIZE)
-            && (p != (uint8_t *)0));
         if ((datalen <= PORT_BUF_SIZE)
             && (p != (uint8_t *)0))
         {
@@ -173,8 +170,6 @@ public:
         datalen(len)
     {
         memset(buf, 0, 64); /* reset memery */
-        Q_ASSERT((datalen <= 64)
-            && (p != (uint8_t *)0));
         if ((datalen <= 64)
             && (p != (uint8_t *)0))
         {
@@ -201,7 +196,7 @@ class CommandEvt : public QP::QEvt {
 public:
     TPCmdQueueNode em; /*! command event element */
     CommandEvt(TPCmdQueueNode p)
-      : QEvt(REQUEST_DONE_SIG),
+      : QEvt(COMMAND_SIG),
         em(p)
     {
     }
@@ -247,6 +242,8 @@ void PortInflightStateMachine_setPortVtbl(TExternPortVtbl const *ptr,
     uint8_t id);
 void PortInflightStateMachine_setRingBuf(TCharRingBuf *pRingBuf,
     uint8_t id);
+void PortInflightStateMachine_setMePortVtbl(TExternPortVtbl const *ptr,
+    QP::QMsm * const me);
 
 } /* namespace ARCS */
 

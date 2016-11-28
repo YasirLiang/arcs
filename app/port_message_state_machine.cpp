@@ -44,7 +44,7 @@ void PortMsgStateMachine_setRingBuf(TCharRingBuf *pRingBuf,
     l_portStateMachine[id].pRingBuf = pRingBuf;
 }
 /* helper Function for self Number of me */
-inline uint8_t PORT_ID(PortMsgStateMachine const * const me) {
+static inline uint8_t PORT_ID(PortMsgStateMachine const * const me) {
     return static_cast<uint8_t>(me - l_portStateMachine);
 }
 /*$ Local variable decleration..............................................*/

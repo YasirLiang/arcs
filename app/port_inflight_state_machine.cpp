@@ -23,7 +23,10 @@ namespace ARCS {
 
 /*$ Local variable decleration..............................................*/
 static PortInflightStateMachine l_portStateMachine[EXTERN_PORT_NUM];
-
+/* helper Function for self Number of me */
+static inline uint8_t PORT_ID(PortInflightStateMachine const * const me) {
+    return static_cast<uint8_t>(me - l_portStateMachine);
+}
 /*$ state machine get instance..............................................*/
 QP::QMsm* PortInflightStateMachine_getIns(uint8_t id) {
     Q_ASSERT(id < EXTERN_PORT_NUM);
@@ -33,15 +36,31 @@ QP::QMsm* PortInflightStateMachine_getIns(uint8_t id) {
 void PortInflightStateMachine_setPortVtbl(TExternPortVtbl const *ptr,
     uint8_t id)
 {
-    Q_ASSERT(id < EXTERN_PORT_NUM);
+    Q_ASSERT((ptr != (TExternPortVtbl const *)0)
+                        && (id < EXTERN_PORT_NUM));
     l_portStateMachine[id].vptr = ptr;
+    qDebug("PortStateMachine[%d] Set Vtable success", id);
+}
+/*$ state machine set new port..............................................*/
+void PortInflightStateMachine_setMePortVtbl(TExternPortVtbl const *ptr,
+    QP::QMsm * const me)
+{
+    uint8_t n;
+    Q_ASSERT((ptr != (TExternPortVtbl const *)0)
+                        && (me != (QP::QMsm * const)0));
+    n = PORT_ID(static_cast<PortInflightStateMachine * const>(me));
+    Q_ASSERT(n < EXTERN_PORT_NUM);
+    l_portStateMachine[n].vptr = ptr;
+    qDebug("PortStateMachine[%d] Set Me Vtable success", n);
 }
 /*$ state machine set ring buffer...........................................*/
 void PortInflightStateMachine_setRingBuf(TCharRingBuf *pRingBuf,
     uint8_t id)
 {
-    Q_ASSERT(id < EXTERN_PORT_NUM);
+    Q_ASSERT((pRingBuf != (TCharRingBuf *)0)
+                        && (id < EXTERN_PORT_NUM));
     l_portStateMachine[id].pRingBuf = pRingBuf;
+    qDebug("PortStateMachine[%d] setRingBuf success", id);
 }
 /*$ Local variable decleration..............................................*/
 QP::QMState const PortInflightStateMachine::active_s = {
@@ -110,6 +129,7 @@ QP::QState PortInflightStateMachine::initial(
         }
     };
     /* Here intial port */
+    Q_ASSERT(me->vptr != (TExternPortVtbl const *)0);
     ExternPort_init(me->vptr);
     /* avoid unused */
     (void)e;
