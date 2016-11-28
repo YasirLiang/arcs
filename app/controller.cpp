@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-11-1
 * Last updated for version 1.0.0
-* Last updated on  2016-11-24
+* Last updated on  2016-11-28
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -124,8 +124,8 @@ QP::QState Controller::serving(Controller * const me,
     TPCmdQueueNode cmd;
     switch (e->sig) {
         case TICK_1MS_SIG: {
-            status_ = QM_SUPER();
             me->m_timeEvt.postIn(me, (QP::QTimeEvtCtr)1);
+            status_ = QM_SUPER();
             break;
         }
         case TRANSMIT_SIG: {
@@ -141,86 +141,59 @@ QP::QState Controller::serving(Controller * const me,
             RequestEvt const * const e_ =
                     static_cast<RequestEvt const * const>(e);
             if (e_->user == QT_REQUEST) {
-                cmd = (TPCmdQueueNode)malloc(sizeof(TCmdQueueNode));
-                if (cmd != (TPCmdQueueNode)0) {
-                    cmd->elem.type = USER_CMD;
-                    cmd->elem.user = QT_USER;
-                    cmd->elem.execStatus = NO_START;
-                    cmd->elem.id = l_contoller.getNextCmd();
-                    /* request data length set */
-                    cmd->elem.cmdBufLen = e_->buflen;
-                    INIT_LIST_HEAD(&cmd->elem.requestHead);
-                    INIT_LIST_HEAD(&cmd->elem.statusList);
-                    if (e_->buflen > 0) {
-                        /* set request data to cmd buffer */
-                        memcpy(cmd->elem.cmdBuf, e_->buf, e_->buflen);
+                TPSpeCmdFunc pSpeFunc;
+                switch(e_->type) {
+                    case QUERY_ID: {
+                        pSpeFunc = &QtCmd_queryId;
+                        break;
                     }
-                    switch(e_->type) {
-                        case QUERY_ID: {
-                            cmd->elem.run = &QtCmd_queryId;
-                            CommandEvt _e(cmd);
-                            qDebug("Dispatch to Cmd(Type = %d) to Commander(< %d?)",
-                                    e_->type,
-                                    QT_MAX_PUB);                            
-                            commander->dispatch(&_e);
-                            break;
-                        }
-                        case SWITCH_MATRIX: {
-                            cmd->elem.run = &QtCmd_switchMatrix;
-                            CommandEvt _e(cmd);
-                            qDebug("Dispatch to Cmd(Type = %d) to Commander(< %d?)",
-                                    e_->type,
-                                    QT_MAX_PUB);                            
-                            commander->dispatch(&_e);
-                            break;
-                        }
-                        case OPT_TERMINAL: {
-                            cmd->elem.run = &QtCmd_optTerminal;
-                            CommandEvt _e(cmd);
-                            qDebug("Dispatch to Cmd(Type = %d) to Commander(< %d?)",
-                                    e_->type,
-                                    QT_MAX_PUB);        
-                            commander->dispatch(&_e);
-                            break;
-                        }
-                        case SET_SYS: {
-                            if (!(e_->buf[0] & 0x01)) {
-                                /* local system set */
-                                cmd->elem.run = &QtCmd_setLocalSys;
-                            }
-                            else {
-                                cmd->elem.run = &QtCmd_setTerminalSys;
-                            }
-                            CommandEvt _e(cmd);
-                            qDebug("Dispatch to Cmd(Type = %d) to Commander(< %d?)",
-                                    e_->type,
-                                    QT_MAX_PUB);
-                            commander->dispatch(&_e);
-                            break;
-                        }
-                        case CAMERA_CONTROL: {
-                            cmd->elem.run = &QtCmd_cameraControl;
-                            CommandEvt _e(cmd);
-                            qDebug("Dispatch to Cmd(Type = %d) to Commander(< %d?)",
-                                    e_->type,
-                                    QT_MAX_PUB);
-                            commander->dispatch(&_e);
-                            break;
-                        }
-                        default: {
-                            /* no other request type */
-                            free(cmd);
-                            cmd = (TPCmdQueueNode)0;
-                            break;
-                        }
+                    case SWITCH_MATRIX: {
+                        pSpeFunc = &QtCmd_switchMatrix;
+                        break;
                     }
-                    status_ = QM_HANDLED();
+                    case OPT_TERMINAL: {
+                        pSpeFunc = &QtCmd_optTerminal;
+                        break;
+                    }
+                    case SET_SYS: {
+                        if (!(e_->buf[0] & 0x01)) {
+                            /* local system set */
+                            pSpeFunc = &QtCmd_setLocalSys;
+                        }
+                        else {
+                            pSpeFunc = &QtCmd_setTerminalSys;
+                        }
+                        break;
+                    }
+                    case CAMERA_CONTROL: {
+                        pSpeFunc = &QtCmd_cameraControl;
+                        break;
+                    }
+                    default: {
+                        /* no other request type */
+                        pSpeFunc = (TPSpeCmdFunc)0;
+                        break;
+                    }
                 }
-                else {
-                    /* log error message here */
-                    status_ = QM_UNHANDLED();
+                if (pSpeFunc != (TPSpeCmdFunc)0) {
+                    cmd = (TPCmdQueueNode)malloc(sizeof(TCmdQueueNode));
+                    if (cmd != (TPCmdQueueNode)0) {
+                        CmdQueue_elemInitial(&cmd->elem,
+                            l_contoller.getNextCmd(), USER_CMD,
+                            QT_USER, e_->buflen, e_->buf, pSpeFunc);
+                        CommandEvt _e(cmd);
+                        qDebug("Dispatch to Cmd(Type = %d) to Commander",
+                            e_->type);
+                        commander->dispatch(&_e);
+                    }
                 }
+                status_ = QM_HANDLED();
             }
+            else {
+                /* log error message here */
+                status_ = QM_UNHANDLED();
+            }
+            /* out of case */
             break;
         }
         default: {

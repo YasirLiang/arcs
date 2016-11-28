@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-11-2
 * Last updated for version 1.0.0
-* Last updated on  2016-11-2
+* Last updated on  2016-11-28
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -67,8 +67,26 @@ int CmdQueue_getCount(TPCmdQueue root) {
     return root->queueCount;
 }
 /*! CmdQueue_elemInitial....................................................*/
-void CmdQueue_elemInitial(TCmdQElem *elem) {
-    (void)elem;
+void CmdQueue_elemInitial(TCmdQElem *elem, uint32_t cmdId,
+    TECmdType type, TECmdUser user, uint16_t dataLen,
+    uint8_t const * const buf, TPSpeCmdFunc const pSpeF)
+{
+    elem->id = cmdId;
+    elem->type = type;
+    elem->user = user;
+    elem->execStatus = NO_START;
+    INIT_LIST_HEAD(&elem->requestHead);
+    INIT_LIST_HEAD(&elem->statusList);
+    /* request data length set */
+    elem->elem.cmdBufLen = dataLen;
+    memset(elem->cmdBuf, 0, USER_PROTOCAL_SIZE);
+    if ((dataLen > 0)
+          &&(buf != (uint8_t const * const)0))
+    {
+        /* set request data to cmd buffer */
+        memcpy(elem->cmdBuf, buf, dataLen);
+    }
+    elem->run = pSpeF;
 }
 /*! CmdQueue_nodeDestroy....................................................*/
 void CmdQueue_nodeDestroy(TPCmdQueueNode *tg) {

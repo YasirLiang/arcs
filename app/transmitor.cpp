@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-10-20
 * Last updated for version 1.0.0
-* Last updated on  2016-11-24
+* Last updated on  2016-11-28
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -83,7 +83,7 @@ Transmitor::Transmitor()
         /* get port state machine msm */
         port[i] = PortInflightStateMachine_getIns(i);
 #endif
-    }    
+    }
 }
 /*$ Transmitor::active()....................................................*/
 bool Transmitor::initialRecvBufList(void) {
@@ -123,7 +123,7 @@ QP::QState Transmitor::initial(Transmitor * const me,
     /* set port state machine virtual table */
     PortInflightStateMachine_setMePortVtbl(QtPortTcpSocket_getVtbl(),
             port[QT_SV_EP]);
-#endif        
+#endif
     /* initial port state machine msm */
     for (uint8_t i = 0; i < EXTERN_PORT_NUM; ++i) {
         port[i]->init();
@@ -145,6 +145,7 @@ QP::QState Transmitor::active(Transmitor * const me,
             for (int i = 0; i < EXTERN_PORT_NUM; ++i) {
                 charMsgPro(i);
             }
+            me->m_timeEvt.postIn(me, (QP::QTimeEvtCtr)1);
             status_ = QM_HANDLED();
             break;
         }

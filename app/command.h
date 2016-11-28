@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-11-2
 * Last updated for version 1.0.0
-* Last updated on  2016-11-2
+* Last updated on  2016-11-28
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -95,6 +95,12 @@ int CmdQueue_isEmpty(TPCmdQueue root);
 void CmdQueue_init(TPCmdQueue root, int size);
 /*! CmdQueue_getSize--------------------------------------------------------*/
 int CmdQueue_getSize(TPCmdQueue root);
+/*! CmdQueue_getCount-------------------------------------------------------*/
+int CmdQueue_getCount(TPCmdQueue root);
+/*! CmdQueue_elemInitial----------------------------------------------------*/
+void CmdQueue_elemInitial(TCmdQElem *elem, uint32_t cmdId,
+    TECmdType type, TECmdUser user, uint16_t dataLen,
+    uint8_t const * const buf, TPSpeCmdFunc const pSpeF);
 /*! CmdQueue_nodeDestroy----------------------------------------------------*/
 void CmdQueue_nodeDestroy(TPCmdQueueNode *tg);
 /*! Cmd_run-----------------------------------------------------------------*/
