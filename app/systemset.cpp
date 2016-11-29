@@ -33,13 +33,20 @@ uint8_t *SystemSetDialog::datagram;
 uint8_t SystemSetDialog::avail;
 /*$ QtPortTcpSocket_getVtbl()...............................................*/
 TExternPortVtbl const * QtPortTcpSocket_getVtbl(void) {
-    return &l_sysSetDialog->vTable;
+    TExternPortVtbl const *pE = (TExternPortVtbl const *)0;
+    if (l_sysSetDialog != (SystemSetDialog *)0) {
+        pE = &l_sysSetDialog->vTable;
+    }
+    /* return vTable pointer */
+    return pE;
 }
 /*$ QtPortTcpSocket::setTcpSocket()..........................................*/
 void QtPortTcpSocket_setTcpSocket(char const * const pip,
     int _port)
 {
-    l_sysSetDialog->setTcpSocket(pip, _port);
+    if (l_sysSetDialog != (SystemSetDialog *)0) {
+        l_sysSetDialog->setTcpSocket(pip, _port);
+    }
 }
 /*$ SystemSetDialog::SystemSetDialog()......................................*/
 SystemSetDialog::SystemSetDialog(QWidget * parent)

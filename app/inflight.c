@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-10-25
 * Last updated for version 1.0.0
-* Last updated on  2016-11-28
+* Last updated on  2016-11-29
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -53,7 +53,6 @@ TInflightCmdNode * Inflight_nodeCreate(uint16_t seqId, uint32_t cmdId,
             pNode = (TInflightCmd_pNode)0;
         }
     }
-        
     /* return pNode, NULL is create not success */
     return pNode;
 }
@@ -120,7 +119,6 @@ TInflightCmd_pNode Inflight_searchSeq(struct list_head *head, uint16_t seq) {
     }
     return (TInflightCmd_pNode)0;
 }
-
 /*! Inflight_searchReq......................................................*/
 TInflightCmd_pNode Inflight_searchReq(struct list_head *head, uint32_t req) {
     TInflightCmd_pNode pos;
