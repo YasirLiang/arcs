@@ -100,7 +100,7 @@ void SystemSetDialog::clientDisConnected(void) {
 void SystemSetDialog::qtPortReady(void) {
     if (avail) {
         /* publish port readable signal */
-        QP::QF::PUBLISH(&qtCltRdEvt, (void*)0);
+        ARCS::A0_Transmitor->POST(&qtCltRdEvt, (void*)0);
     }
 }
 /*$ SystemSetDialog::setTcpSocket().........................................*/

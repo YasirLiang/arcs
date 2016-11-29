@@ -148,6 +148,18 @@ QP::QState Transmitor::active(Transmitor * const me,
             status_ = QM_HANDLED();
             break;
         }
+        case PORTREADABLE_SIG: {
+            PortEvt const * const portEvt
+                    = static_cast<PortEvt const * const>(e);
+            if (portEvt->port == QT_PORT) {
+                me->port[QT_SV_EP]->dispatch(e);
+            }
+            else {
+                /* error port input, do nothing */
+            }
+            status_ = QM_HANDLED();
+            break;
+        }
         default: {
             status_ = QM_SUPER();
             break;
