@@ -52,8 +52,8 @@ protected:
     static QP::QState serving(Commander * const me,
         QP::QEvt const * const e);
 private:
-    static void queueCmdRun(Commander * const me);
-    static void requestRun(Commander * const me);
+    void queueCmdRun(Commander * const me);
+    void requestRun(Commander * const me);
 };
 
 } /*namespace ARCS*/
