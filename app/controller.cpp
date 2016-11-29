@@ -75,27 +75,6 @@ Controller::Controller()
     }
 }
 /*$ Controller::active()....................................................*/
-QP::QState Controller::active(Controller * const me,
-    QP::QEvt const * const e)
-{
-    QP::QState status_;
-    switch (e->sig) {
-        case TICK_1MS_SIG: {
-            /*1\ looking for inflight list and proccess timeout
-                  node */
-            timeTick_();
-            status_ = QM_HANDLED();
-            break;
-        }
-        default: {
-            break;
-        }
-    }
-    /* avoid unused */
-    (void)me;
-    return status_;
-}
-/*$ Controller::active()....................................................*/
 QP::QState Controller::initial(Controller * const me,
         QP::QEvt const * const e)
 {
@@ -111,10 +90,39 @@ QP::QState Controller::initial(Controller * const me,
     };
     /* initial msm */
     commander->init();
+    /* subscribe terminate signal */
+    me->subscribe(TERMINATE_SIG);
     /* avoid unused */
     (void)e;
     /* tran state table */
     return QM_TRAN_INIT(&table_);
+}
+/*$ Controller::active()....................................................*/
+QP::QState Controller::active(Controller * const me,
+    QP::QEvt const * const e)
+{
+    QP::QState status_;
+    switch (e->sig) {
+        case TICK_1MS_SIG: {
+            /*1\ looking for inflight list and proccess timeout
+                  node */
+            timeTick_();
+            status_ = QM_HANDLED();
+            break;
+        }
+        case TERMINATE_SIG: {
+            qDebug("CONTROLLER EXIT");
+            BSP_terminate(0);
+            status_ = QM_HANDLED();
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+    /* avoid unused */
+    (void)me;
+    return status_;
 }
 /*$ Controller::serving()...................................................*/
 QP::QState Controller::serving(Controller * const me,

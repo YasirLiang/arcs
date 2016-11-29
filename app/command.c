@@ -19,6 +19,7 @@
 /*Including file------------------------------------------------------------*/
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h> /*! memset/memcpy declaration */
 #include "list.h"
 #include "request.h"
 #include "command.h"
@@ -78,7 +79,7 @@ void CmdQueue_elemInitial(TCmdQElem *elem, uint32_t cmdId,
     INIT_LIST_HEAD(&elem->requestHead);
     INIT_LIST_HEAD(&elem->statusList);
     /* request data length set */
-    elem->elem.cmdBufLen = dataLen;
+    elem->cmdBufLen = dataLen;
     memset(elem->cmdBuf, 0, USER_PROTOCAL_SIZE);
     if ((dataLen > 0)
           &&(buf != (uint8_t const * const)0))

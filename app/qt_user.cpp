@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-11-11
 * Last updated for version 1.0.0
-* Last updated on  2016-11-24
+* Last updated on  2016-11-29
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -64,6 +64,10 @@ void* QtCmd_queryId(struct TCmdQElem *pElem) {
         else {
             /* log error here */
             /* set command running error code */
+            /* set status to Finish */
+            MainSurface::instance()->setStatus(LBSTATUS_FINISH);
+            /* set result */
+            MainSurface::instance()->setResult(LBRESULT_FAILED);
             /* unLock Ui */
             MainSurface::instance()->unLockUi();
         }
@@ -73,6 +77,10 @@ void* QtCmd_queryId(struct TCmdQElem *pElem) {
         pElem->execStatus = EXEC_SUCCESS;
         qDebug("[Qt User %d Cmd finish]",
                     cmd);
+        /* set status to Finish */
+        MainSurface::instance()->setStatus(LBSTATUS_FINISH);
+        /* set result to success */
+        MainSurface::instance()->setResult(LBRESULT_SCS);
         /* unlock ui */
         MainSurface::instance()->unLockUi();
     }
@@ -115,6 +123,11 @@ void* QtCmd_switchMatrix(struct TCmdQElem *pElem) {
         else {
             /* log error here */
             /* set command running error code */
+            /* set status to Finish */
+            MainSurface::instance()->setStatus(LBSTATUS_FINISH);
+            /* set result */
+            MainSurface::instance()->setResult(LBRESULT_FAILED);
+
             /* unLock Ui */
             MainSurface::instance()->unLockUi();
         }
@@ -122,7 +135,10 @@ void* QtCmd_switchMatrix(struct TCmdQElem *pElem) {
     else {
         /* set query command running successfully */
         pElem->execStatus = EXEC_SUCCESS;
-        
+        /* set status to Finish */
+        MainSurface::instance()->setStatus(LBSTATUS_FINISH);
+        /* set result to success */
+        MainSurface::instance()->setResult(LBRESULT_SCS);
         /* unlock ui */
         MainSurface::instance()->unLockUi();
     }
@@ -165,6 +181,11 @@ void* QtCmd_optTerminal(struct TCmdQElem *pElem) {
         else {
             /* log error here */
             /* set command running error code */
+            /* set status to Finish */
+            MainSurface::instance()->setStatus(LBSTATUS_FINISH);
+            /* set result */
+            MainSurface::instance()->setResult(LBRESULT_FAILED);
+
             /* unLock Ui */
             MainSurface::instance()->unLockUi();
         }
@@ -172,7 +193,10 @@ void* QtCmd_optTerminal(struct TCmdQElem *pElem) {
     else {
         /* set query command running successfully */
         pElem->execStatus = EXEC_SUCCESS;
-        
+        /* set status to Finish */
+        MainSurface::instance()->setStatus(LBSTATUS_FINISH);
+        /* set result to success */
+        MainSurface::instance()->setResult(LBRESULT_SCS);
         /* unlock ui */
         MainSurface::instance()->unLockUi();
     }
@@ -209,6 +233,10 @@ void* QtCmd_setLocalSys(struct TCmdQElem *pElem) {
     else {
         pElem->execStatus = EXEC_SUCCESS;
     }
+    /* set status to Finish */
+    MainSurface::instance()->setStatus(LBSTATUS_FINISH);
+    /* set result to success */
+    MainSurface::instance()->setResult(LBRESULT_SCS);
     /* not generate request local default*/
     return (void *)0;
 }
@@ -248,15 +276,22 @@ void* QtCmd_setTerminalSys(struct TCmdQElem *pElem) {
         else {
             /* log error here */
             /* set command running error code */
+            /* set status to Finish */
+            MainSurface::instance()->setStatus(LBSTATUS_FINISH);
+            /* set result */
+            MainSurface::instance()->setResult(LBRESULT_FAILED);
+
             /* unLock Ui */
             MainSurface::instance()->unLockUi();
         }
     }
     else {
         /* set query command running successfully */
-        
         pElem->execStatus = EXEC_SUCCESS;
-        
+        /* set status to Finish */
+        MainSurface::instance()->setStatus(LBSTATUS_FINISH);
+        /* set result to success */
+        MainSurface::instance()->setResult(LBRESULT_SCS);
         /* unlock ui */
         MainSurface::instance()->unLockUi();
     }
@@ -299,6 +334,10 @@ void* QtCmd_cameraControl(struct TCmdQElem *pElem) {
         else {
             /* log error here */
             /* set command running error code */
+            /* set status to Finish */
+            MainSurface::instance()->setStatus(LBSTATUS_FINISH);
+            /* set result */
+            MainSurface::instance()->setResult(LBRESULT_FAILED);
             /* unLock Ui */
             MainSurface::instance()->unLockUi();
         }
@@ -307,7 +346,10 @@ void* QtCmd_cameraControl(struct TCmdQElem *pElem) {
         /* get */
         /* set query command running successfully */
         pElem->execStatus = EXEC_SUCCESS;
-        
+        /* set status to Finish */
+        MainSurface::instance()->setStatus(LBSTATUS_FINISH);
+        /* set result to success */
+        MainSurface::instance()->setResult(LBRESULT_SCS);          
         /* unlock ui */
         MainSurface::instance()->unLockUi();
     }

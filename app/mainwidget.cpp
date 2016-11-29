@@ -63,6 +63,8 @@ MainSurface::MainSurface(QWidget *parent)
     if (index == 0) {/* operetion to speak */
         optType = TERMINAL_SPEAK;
         optComboBox->setEnabled(1); /* enabled */
+        pausePushBtn->setEnabled(0); /* disabled */
+        resumePushBtn->setEnabled(0); /* disabled */
     }
     else if (index == 1) { /* SIGN */
         optType = TERMINAL_SIGN;
@@ -76,7 +78,11 @@ MainSurface::MainSurface(QWidget *parent)
     else {
         /* no else case */
     }
-
+    /* set line Edit QIntValidator */
+    pLvSpIntValidator = new QIntValidator(0, 255, this);
+    pVtSpIntValidator = new QIntValidator(0, 255, this);
+    leveSpeedLineEdit->setValidator(pLvSpIntValidator);
+    verticalSpeedLineEdit->setValidator(pLvSpIntValidator);
     /* set editable */
     idComboBox->setEditable(1);
     optComboBox->setEditable(1);
@@ -86,8 +92,12 @@ MainSurface::MainSurface(QWidget *parent)
     curAddr = 0xffff; /* all terminal */
     curOutput = 1;
     curInput = 1;
-    
-    statusLabel->setText(tr("Ready"));
+    /* create system set dialog */
+    sysDlg = new SystemSetDialog(this);
+    /* set result to NULL */
+    setResult("Result:");
+    /* set status to Ready */
+    setStatus("Status: Ready");
     connect(zoomPushBtn, SIGNAL(clicked()), this, SLOT(add()));
     connect(beginPushBtn, SIGNAL(clicked()), this, SLOT(begin()));
     connect(curcameraSwPushBtn, SIGNAL(clicked()),
@@ -114,9 +124,9 @@ MainSurface::MainSurface(QWidget *parent)
     connect(upLeftPushBtn, SIGNAL(clicked()), this, SLOT(upLeft()));
     connect(upRightPushBtn, SIGNAL(clicked()), this, SLOT(upRight()));
     connect(leveSpeedLineEdit, SIGNAL(textChanged(const QString &)),
-        this, SLOT(levelSpeedDoTxtChange()));
+        this, SLOT(levelSpeedDoTxtChange(const QString &)));
     connect(verticalSpeedLineEdit, SIGNAL(textChanged(const QString &)),
-        this, SLOT(verticalSpeedDoTxtChange()));
+        this, SLOT(verticalSpeedDoTxtChange(const QString &)));
     connect(cmrCtlTypeComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(cmrCtlTypeComboBoxValChanged()));
     connect(curcameraComboBox, SIGNAL(currentIndexChanged(int)),
@@ -133,11 +143,20 @@ MainSurface::MainSurface(QWidget *parent)
         this, SLOT(outputComboBoxValChanged()));
      connect(idComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(idComboBoxValChanged()));
-     sysDlg = new SystemSetDialog(this);
 }
-
+/*~MainSurface()............................................................*/
 MainSurface::~MainSurface(void) {
+    qDebug("Exit MainSurface");
+    delete pLvSpIntValidator;
+    delete pVtSpIntValidator;
     delete sysDlg;
+}
+/*closeEvent()..............................................................*/
+void MainSurface::closeEvent(QCloseEvent *event) {
+    qDebug("MainSurface recieve Close Event");
+    static QP::QEvt const e(ARCS::TERMINATE_SIG);
+    QP::QF::PUBLISH(&e, (void *)0);
+    (void)event;
 }
 /*instance()................................................................*/
 MainSurface* MainSurface::instance(void) {
@@ -150,6 +169,18 @@ void MainSurface::lockUi(void) {
 /*unLockUi()................................................................*/
 void MainSurface::unLockUi(void) {
     uiLocked = (uint8_t)0;
+}
+/*setStatus()...............................................................*/
+void MainSurface::setStatus(char const * const status_) {
+    if (status_ != (char *)0) {
+        statusLabel->setText(tr(status_));
+    }
+}
+/*setResult()...............................................................*/
+void MainSurface::setResult(char const * const result_) {
+    if (result_ != (char *)0) {
+        resultLabel->setText(tr(result_));
+    }
 }
 /*add().....................................................................*/
 void MainSurface::add(void) {
@@ -184,6 +215,10 @@ void MainSurface::add(void) {
         e.buflen = (uint8_t)4; /* four lenght */
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -226,6 +261,10 @@ void MainSurface::begin(void) {
         }
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -249,6 +288,10 @@ void MainSurface::cameraSwitch(void) {
         e.buflen = (uint8_t)4; /* four lenght */
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");        
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -280,6 +323,10 @@ void MainSurface::down(void) {
         e.buflen = (uint8_t)4; /* four lenght */
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");        
         /* lock ui until last request being finished */
         lockUi();        
     }
@@ -303,6 +350,10 @@ void MainSurface::downLeft(void) {
         e.buflen = (uint8_t)4; /* four lenght */
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");        
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -326,6 +377,10 @@ void MainSurface::downRight(void) {
         e.buflen = (uint8_t)4; /* four lenght */
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");        
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -349,6 +404,10 @@ void MainSurface::left(void) {
         e.buflen = (uint8_t)4; /* four lenght */
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");        
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -372,6 +431,10 @@ void MainSurface::right(void) {
         e.buflen = (uint8_t)4; /* four lenght */
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");        
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -393,6 +456,10 @@ void MainSurface::matrixSwitch(void) {
         e.buflen = (uint8_t)1;
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");        
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -435,6 +502,10 @@ void MainSurface::pause(void) {
         }
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");        
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -457,6 +528,10 @@ void MainSurface::query(void) {
         e.buflen = (uint8_t)2; /* set buffer lenght */
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");        
         /* clear table widget */
         qresultTableWidget->clear();
         /* lock ui until last request being finished */
@@ -500,6 +575,10 @@ void MainSurface::reduce(void) {
         e.buflen = (uint8_t)4; /* four lenght */
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");        
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -534,6 +613,10 @@ void MainSurface::regain(void) {
         e.buflen = (uint8_t)1;
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -592,6 +675,10 @@ void MainSurface::stop(void) {
         }
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -615,6 +702,10 @@ void MainSurface::up(void) {
         e.buflen = (uint8_t)4; /* four lenght */
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -638,6 +729,10 @@ void MainSurface::upLeft(void) {
         e.buflen = (uint8_t)4; /* four lenght */
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -661,6 +756,10 @@ void MainSurface::upRight(void) {
         e.buflen = (uint8_t)4; /* four lenght */
         /* post event to Controller active object */
         ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");
         /* lock ui until last request being finished */
         lockUi();
     }

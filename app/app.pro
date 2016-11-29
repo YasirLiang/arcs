@@ -65,7 +65,6 @@ SOURCES += \
     circular_link_queue.c \
     inflight.c
 
-
 HEADERS += \
     version.h \
     circular_link_queue.h \

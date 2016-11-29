@@ -27,13 +27,17 @@
 class MainSurface : public QWidget, public Ui_MainWidget {
     Q_OBJECT
 public:
+    class SystemSetDialog *sysDlg;
+    class QValidator *pLvSpIntValidator;
+    class QValidator *pVtSpIntValidator;
+    static ARCS::RequestEvt e;
     MainSurface(QWidget * parent = 0);
     ~MainSurface(void);
     static MainSurface *instance(void);
     void lockUi(void);
     void unLockUi(void);
-    class SystemSetDialog *sysDlg;
-    static ARCS::RequestEvt e;
+    void setStatus(char const * const status_);
+    void setResult(char const * const result_);
 private:
     bool uiLocked; /*it's setted to one until user's request is finished. */
     uint32_t requstId;
@@ -55,6 +59,9 @@ private:
     uint16_t queryAddr;
     uint16_t curAddr;
     uint16_t curId;
+protected:
+    /*! override closeEvent() virtual function */
+    void closeEvent(QCloseEvent *event);    
 private slots:
     void add(void);
     void begin(void);

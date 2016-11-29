@@ -129,7 +129,6 @@ QP::QState Transmitor::initial(Transmitor * const me,
         port[i]->init();
     }
     /* void unused */
-    (void)me;
     (void)e;
     /* tran state table */
     return QM_TRAN_INIT(&table_);

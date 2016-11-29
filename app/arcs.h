@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-10-20
 * Last updated for version 1.0.0
-* Last updated on  2016-10-28
+* Last updated on  2016-10-29
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -27,6 +27,15 @@ Q_DEFINE_THIS_FILE
 #define CEVT_N 512
 /*! transmitor event queue count */
 #define TEVT_N 512
+/*! define LABEL status and result */
+#define LBSTATUS "Status:"
+#define LBSTATUS_READY "Status: Ready"
+#define LBSTATUS_EXCUTE "Status: Excuting"
+#define LBSTATUS_FINISH "Status: Finish"
+#define LBRESULT "Result:"
+#define LBRESULT_SCS "Result: Success"
+#define LBRESULT_FAILED "Result: Failed"
+
 /*! avdecc reception control system namespace-------------------------------*/
 namespace ARCS {
 
@@ -248,7 +257,7 @@ void PortInflightStateMachine_setMePortVtbl(TExternPortVtbl const *ptr,
 } /* namespace ARCS */
 
 namespace ARCS {
-
+    
 /*! set zero memory define */
 #define MZR(pos, size) do {\
     memset(pos, 0, size);\
