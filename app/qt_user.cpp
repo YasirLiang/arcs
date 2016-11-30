@@ -26,17 +26,22 @@
 /*local variable of current command-----------------------------------------*/
 static uint32_t l_curCmd;
 static uint16_t l_seqNum;
+#define QT_USER_BUF_SIZE 512
 /*$ qt mainsurface query id command function................................*/
 void* QtCmd_queryId(struct TCmdQElem *pElem) {
     uint32_t cmd, reqId;
     uint16_t bufLen;
+    int flLen;
     TProtocalQt buf;
     TInflightCmd_pNode pi;
+    uint8_t qtBuf[QT_USER_BUF_SIZE];
+    bool failed;
     /* assert 'NULL' pointer error */
     Q_ASSERT(pElem != (struct TCmdQElem *)0);
     cmd = pElem->id;
     if (l_curCmd != cmd) {/* first run this command */
         l_curCmd = cmd;
+        memset(&buf, 0, sizeof(TProtocalQt));
         buf.head = PROTOCAL_QT_TYPE;
         buf.type = 0x00; /* query */
         buf.seq = ++l_seqNum;
@@ -44,24 +49,31 @@ void* QtCmd_queryId(struct TCmdQElem *pElem) {
         buf.dataLen = pElem->cmdBufLen;
         memcpy(buf.dataBuf, pElem->cmdBuf, buf.dataLen);
         bufLen = buf.dataLen + PRO_COMMON_LEN;
-        reqId = ARCS::Controller_getNextReqId();
-        pi = Inflight_nodeCreate(buf.seq, cmd,
-            bufLen, reqId, ARCS::NOTIFY_FLAG,
-            (uint32_t)100, (uint32_t)3, (uint8_t *)&buf);
-        if (pi != (TInflightCmd_pNode)0) {
-            Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
-            ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
-                ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
-            pElem->execStatus = COMMAND_EXECUTING;
-            /* when no real request node generate, must update
-                 commander request id after get next request id */
-            ARCS::Commander_updateCurrentReq(reqId);
-            /* log executing command here */
-            /* log cmd here */
-            qDebug("[Qt User %d Cmd(Req = %d) executing]",
-                    cmd, reqId);
+        failed = (bool)1;
+        flLen = protocalQtFill(&buf, bufLen, qtBuf, QT_USER_BUF_SIZE);
+        if (flLen != -1) {
+            reqId = ARCS::Controller_getNextReqId();
+            pi = Inflight_nodeCreate(buf.seq, cmd,
+                flLen, reqId, ARCS::NOTIFY_FLAG,
+                (uint32_t)100, (uint32_t)3, qtBuf);
+            if (pi != (TInflightCmd_pNode)0) {
+                Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
+                ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
+                    ARCS::QT_PORT, flLen, qtBuf), (void*)0);
+                pElem->execStatus = COMMAND_EXECUTING;
+                failed = (bool)0;
+                /* when no real request node generate, must update
+                     commander request id after get next request id */
+                ARCS::Commander_updateCurrentReq(reqId);
+                /* log executing command here */
+                /* log cmd here */
+                qDebug("[Qt User %d Cmd(Req = %d) executing]",
+                        cmd, reqId);
+            }
         }
-        else {
+        
+        if (failed) {
+            pElem->execStatus = EXEC_SUCCESS;
             /* log error here */
             /* set command running error code */
             /* set status to Finish */
@@ -93,11 +105,15 @@ void* QtCmd_switchMatrix(struct TCmdQElem *pElem) {
     uint16_t bufLen;
     TProtocalQt buf;
     TInflightCmd_pNode pi;
+    bool failed;
+    int flLen;
+    uint8_t qtBuf[QT_USER_BUF_SIZE];
     /* assert 'NULL' pointer error */
     Q_ASSERT(pElem != (struct TCmdQElem *)0);
     cmd = pElem->id;
     if (l_curCmd != cmd) {/* first run this command */
         l_curCmd = cmd;
+        memset(&buf, 0, sizeof(TProtocalQt));
         buf.head = PROTOCAL_QT_TYPE;
         buf.type = PRO_SET_TYPE; /* set */
         buf.seq = ++l_seqNum;
@@ -105,29 +121,35 @@ void* QtCmd_switchMatrix(struct TCmdQElem *pElem) {
         buf.dataLen = pElem->cmdBufLen;
         memcpy(buf.dataBuf, pElem->cmdBuf, buf.dataLen);
         bufLen = buf.dataLen + PRO_COMMON_LEN;
-        reqId = ARCS::Controller_getNextReqId();
-        pi = Inflight_nodeCreate(buf.seq, cmd,
-            bufLen, reqId, ARCS::NOTIFY_FLAG,
-            (uint32_t)100, (uint32_t)3, (uint8_t *)&buf);
-        if (pi != (TInflightCmd_pNode)0) {
-            Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
-            ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
-                ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
-            pElem->execStatus = COMMAND_EXECUTING;
-            /* when no real request node generate, must update
-                 commander request id after get next request id */
-            ARCS::Commander_updateCurrentReq(reqId);
-            /* log executing command here */
-            /* log cmd here */
+        failed = (bool)1;
+        flLen = protocalQtFill(&buf, bufLen, qtBuf, QT_USER_BUF_SIZE);
+        if (flLen != -1) {
+            reqId = ARCS::Controller_getNextReqId();
+            pi = Inflight_nodeCreate(buf.seq, cmd,
+                (uint16_t)flLen, reqId, ARCS::NOTIFY_FLAG,
+                (uint32_t)100, (uint32_t)3, qtBuf);
+            if (pi != (TInflightCmd_pNode)0) {
+                Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
+                ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
+                    ARCS::QT_PORT, (uint16_t)flLen, qtBuf), (void*)0);
+                failed = (bool)0;
+                pElem->execStatus = COMMAND_EXECUTING;
+                /* when no real request node generate, must update
+                     commander request id after get next request id */
+                ARCS::Commander_updateCurrentReq(reqId);
+                /* log executing command here */
+                /* log cmd here */
+            }
         }
-        else {
+
+        if (failed) {
+            pElem->execStatus = EXEC_SUCCESS;
             /* log error here */
             /* set command running error code */
             /* set status to Finish */
             MainSurface::instance()->setStatus(LBSTATUS_FINISH);
             /* set result */
             MainSurface::instance()->setResult(LBRESULT_FAILED);
-
             /* unLock Ui */
             MainSurface::instance()->unLockUi();
         }
@@ -151,11 +173,15 @@ void* QtCmd_optTerminal(struct TCmdQElem *pElem) {
     uint16_t bufLen;
     TProtocalQt buf;
     TInflightCmd_pNode pi;
+    bool failed;
+    int flLen;
+    uint8_t qtBuf[QT_USER_BUF_SIZE];
     /* assert 'NULL' pointer error */
     Q_ASSERT(pElem != (struct TCmdQElem *)0);
     cmd = pElem->id;
     if (l_curCmd != cmd) {/* first run this command */
         l_curCmd = cmd;
+        memset(&buf, 0, sizeof(TProtocalQt));
         buf.head = PROTOCAL_QT_TYPE;
         buf.type = PRO_SET_TYPE; /* set */
         buf.seq = ++l_seqNum;
@@ -163,29 +189,35 @@ void* QtCmd_optTerminal(struct TCmdQElem *pElem) {
         buf.dataLen = pElem->cmdBufLen;
         memcpy(buf.dataBuf, pElem->cmdBuf, buf.dataLen);
         bufLen = buf.dataLen + PRO_COMMON_LEN;
-        reqId = ARCS::Controller_getNextReqId();
-        pi = Inflight_nodeCreate(buf.seq, cmd,
-            bufLen, reqId, ARCS::NOTIFY_FLAG,
-            (uint32_t)100, (uint32_t)3, (uint8_t *)&buf);
-        if (pi != (TInflightCmd_pNode)0) {
-            Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
-            ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
-                ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
-            pElem->execStatus = COMMAND_EXECUTING;
-            /* when no real request node generate, must update
-                 commander request id after get next request id */
-            ARCS::Commander_updateCurrentReq(reqId);
-            /* log executing command here */
-            /* log cmd here */
+        failed = (bool)1;
+        flLen = protocalQtFill(&buf, bufLen, qtBuf, QT_USER_BUF_SIZE);
+        if (flLen != -1) {
+            reqId = ARCS::Controller_getNextReqId();
+            pi = Inflight_nodeCreate(buf.seq, cmd,
+                (uint16_t)flLen, reqId, ARCS::NOTIFY_FLAG,
+                (uint32_t)100, (uint32_t)3, qtBuf);
+            if (pi != (TInflightCmd_pNode)0) {
+                Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
+                ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
+                    ARCS::QT_PORT, (uint16_t)flLen, qtBuf), (void*)0);
+                failed = (bool)0;
+                pElem->execStatus = COMMAND_EXECUTING;
+                /* when no real request node generate, must update
+                     commander request id after get next request id */
+                ARCS::Commander_updateCurrentReq(reqId);
+                /* log executing command here */
+                /* log cmd here */
+            }
         }
-        else {
+
+        if (failed) {
+            pElem->execStatus = EXEC_SUCCESS;
             /* log error here */
             /* set command running error code */
             /* set status to Finish */
             MainSurface::instance()->setStatus(LBSTATUS_FINISH);
             /* set result */
             MainSurface::instance()->setResult(LBRESULT_FAILED);
-
             /* unLock Ui */
             MainSurface::instance()->unLockUi();
         }
@@ -246,11 +278,15 @@ void* QtCmd_setTerminalSys(struct TCmdQElem *pElem) {
     uint16_t bufLen;
     TProtocalQt buf;
     TInflightCmd_pNode pi;
+    bool failed;
+    int flLen;
+    uint8_t qtBuf[QT_USER_BUF_SIZE];
     /* assert 'NULL' pointer error */
     Q_ASSERT(pElem != (struct TCmdQElem *)0);
     cmd = pElem->id;
     if (l_curCmd != cmd) {/* first run this command */
         l_curCmd = cmd;
+        memset(&buf, 0, sizeof(TProtocalQt));
         buf.head = PROTOCAL_QT_TYPE;
         buf.type = PRO_SET_TYPE; /* set */
         buf.seq = ++l_seqNum;
@@ -258,29 +294,35 @@ void* QtCmd_setTerminalSys(struct TCmdQElem *pElem) {
         buf.dataLen = pElem->cmdBufLen;
         memcpy(buf.dataBuf, pElem->cmdBuf, buf.dataLen);
         bufLen = buf.dataLen + PRO_COMMON_LEN;
-        reqId = ARCS::Controller_getNextReqId();
-        pi = Inflight_nodeCreate(buf.seq, cmd,
-            bufLen, reqId, ARCS::NOTIFY_FLAG,
-            (uint32_t)100, (uint32_t)3, (uint8_t *)&buf);
-        if (pi != (TInflightCmd_pNode)0) {
-            Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
-            ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
-                ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
-            pElem->execStatus = COMMAND_EXECUTING;
-            /* when no real request node generate, must update
-                 commander request id after get next request id */
-            ARCS::Commander_updateCurrentReq(reqId);
-            /* log executing command here */
-            /* log cmd here */
+        failed = (bool)1;
+        flLen = protocalQtFill(&buf, bufLen, qtBuf, QT_USER_BUF_SIZE);
+        if (flLen != -1) {
+            reqId = ARCS::Controller_getNextReqId();
+            pi = Inflight_nodeCreate(buf.seq, cmd,
+                (uint16_t)flLen, reqId, ARCS::NOTIFY_FLAG,
+                (uint32_t)100, (uint32_t)3, qtBuf);
+            if (pi != (TInflightCmd_pNode)0) {
+                Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
+                ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
+                    ARCS::QT_PORT, (uint16_t)flLen, qtBuf), (void*)0);
+                failed = (bool)0;
+                pElem->execStatus = COMMAND_EXECUTING;
+                /* when no real request node generate, must update
+                     commander request id after get next request id */
+                ARCS::Commander_updateCurrentReq(reqId);
+                /* log executing command here */
+                /* log cmd here */
+            }
         }
-        else {
+
+        if (failed) {
+            pElem->execStatus = EXEC_SUCCESS;
             /* log error here */
             /* set command running error code */
             /* set status to Finish */
             MainSurface::instance()->setStatus(LBSTATUS_FINISH);
             /* set result */
             MainSurface::instance()->setResult(LBRESULT_FAILED);
-
             /* unLock Ui */
             MainSurface::instance()->unLockUi();
         }
@@ -304,11 +346,15 @@ void* QtCmd_cameraControl(struct TCmdQElem *pElem) {
     uint16_t bufLen;
     TProtocalQt buf;
     TInflightCmd_pNode pi;
+    bool failed;
+    int flLen;
+    uint8_t qtBuf[QT_USER_BUF_SIZE];
     /* assert 'NULL' pointer error */
     Q_ASSERT(pElem != (struct TCmdQElem *)0);
     cmd = pElem->id;
     if (l_curCmd != cmd) {/* first run this command */
         l_curCmd = cmd;
+        memset(&buf, 0, sizeof(TProtocalQt));
         buf.head = PROTOCAL_QT_TYPE;
         buf.type = PRO_SET_TYPE; /* set */
         buf.seq = ++l_seqNum;
@@ -316,22 +362,29 @@ void* QtCmd_cameraControl(struct TCmdQElem *pElem) {
         buf.dataLen = pElem->cmdBufLen;
         memcpy(buf.dataBuf, pElem->cmdBuf, buf.dataLen);
         bufLen = buf.dataLen + PRO_COMMON_LEN;
-        reqId = ARCS::Controller_getNextReqId();
-        pi = Inflight_nodeCreate(buf.seq, cmd,
-            bufLen, reqId, ARCS::NOTIFY_FLAG,
-            (uint32_t)100, (uint32_t)3, (uint8_t *)&buf);
-        if (pi != (TInflightCmd_pNode)0) {
-            Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
-            ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
-                ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
-            pElem->execStatus = COMMAND_EXECUTING;
-            /* when no real request node generate, must update
-                 commander request id after get next request id */
-            ARCS::Commander_updateCurrentReq(reqId);
-            /* log executing command here */
-            /* log cmd here */
+        failed = (bool)1;
+        flLen = protocalQtFill(&buf, bufLen, qtBuf, QT_USER_BUF_SIZE);
+        if (flLen != -1) {
+            reqId = ARCS::Controller_getNextReqId();
+            pi = Inflight_nodeCreate(buf.seq, cmd,
+                (uint16_t)flLen, reqId, ARCS::NOTIFY_FLAG,
+                (uint32_t)100, (uint32_t)3, qtBuf);
+            if (pi != (TInflightCmd_pNode)0) {
+                Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
+                ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
+                    ARCS::QT_PORT, (uint16_t)flLen, qtBuf), (void*)0);
+                failed = (bool)0;
+                pElem->execStatus = COMMAND_EXECUTING;
+                /* when no real request node generate, must update
+                     commander request id after get next request id */
+                ARCS::Commander_updateCurrentReq(reqId);
+                /* log executing command here */
+                /* log cmd here */
+            }
         }
-        else {
+
+        if (failed) {
+            pElem->execStatus = EXEC_SUCCESS;
             /* log error here */
             /* set command running error code */
             /* set status to Finish */
@@ -382,6 +435,7 @@ void* ServerCmd_queryId(struct TCmdQElem *pElem) {
         pBuf = (TProtocalQt *)pElem->cmdBuf;
         /* response for server request */
         if (!(pBuf->type & PRO_RESP_MASK)) {
+            memset(&buf, 0, sizeof(TProtocalQt));
             buf.head = PROTOCAL_QT_TYPE;
             buf.type = (0x00 & PRO_RESP_MASK);
             buf.seq = pBuf->seq;

@@ -97,6 +97,44 @@ typedef struct TProtocalQtQueryData {
 #define MIC_FIRST_APPLY 2
 /*! apply status */
 #define MIC_APPLY 3
+
+static inline int protocalQtFill(TProtocalQt *pIn,
+    int inLen, uint8_t *pBuf, int bufLen)
+{
+    int i;
+    
+    uint8_t countCrc;
+    if (((inLen + 1) > bufLen) /* include crc */
+          || (inLen < PRO_COMMON_LEN)
+          || (pIn == (TProtocalQt *)0)
+          || (pBuf == (uint8_t *)0)
+          || (pIn->dataLen > PRO_QT_MAX))
+    { /* out off range */
+        return -1;
+    }
+    memset(pBuf, 0, bufLen);
+    pBuf[0] = pIn->head;
+    pBuf[1] = pIn->type;
+    /* low ahead */
+    pBuf[2] = (uint8_t)((pIn->seq & 0x00ff) >> 0U);
+    pBuf[3] = (uint8_t)((pIn->seq & 0xff00) >> 8U);
+    pBuf[4] = pIn->cmd;
+    pBuf[5] = (uint8_t)((pIn->dataLen & 0x00ff) >> 0);
+    pBuf[6] = (uint8_t)((pIn->dataLen & 0xff00) >> 8);
+    for (i = 0; i < pIn->dataLen; i++) {/* fill data */
+        pBuf[i+7] = pIn->dataBuf[i];/* fill data */
+    }
+    /* count crc */
+    countCrc = 0;
+    for (i = 0; i < inLen; i++) {
+        countCrc ^= pBuf[i]; /* count crc */
+    }
+    /* fill crc */
+    pBuf[inLen] = countCrc;
+    /* return include crc data len */
+    return (inLen + 1);
+}
+
 #ifdef __cplusplus
 } /* end extern "C" */
 #endif /* __cplusplus */

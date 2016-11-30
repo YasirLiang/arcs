@@ -58,6 +58,7 @@ private:
     bool initialRecvBufList(void);
 public:
     Transmitor();
+    ~Transmitor();
 protected:
     static QP::QMState const active_s;
     static QP::QMState const serving_s;

@@ -26,8 +26,8 @@ static SystemSetDialog *l_sysSetDialog;
 ARCS::PortEvt SystemSetDialog::qtCltRdEvt(ARCS::PORTREADABLE_SIG,
     ARCS::QT_PORT,
     ARCS::READABLE);
-QString SystemSetDialog::tcpIp;
-int32_t SystemSetDialog::tcpPort;
+QString SystemSetDialog::tcpIp("192.168.0.154");
+int32_t SystemSetDialog::tcpPort = 5002;
 QTcpSocket SystemSetDialog::tcpClient;
 uint8_t *SystemSetDialog::datagram;
 uint8_t SystemSetDialog::avail;
@@ -75,7 +75,7 @@ void SystemSetDialog::displayError(QAbstractSocket::SocketError socketErr) {
     if (socketErr == QTcpSocket::RemoteHostClosedError) {
         return;
     }
-
+    qDebug("Socket Error\n");
     QMessageBox::information(this,
         "NetWork Error:",
         tcpClient.errorString());
@@ -88,6 +88,8 @@ void SystemSetDialog::clientConnected(void) {
     /* can set connect server successful */
     qDebug("Connect to Server success( %s-%d )\n",
         (char *)&tcpIp, tcpPort);
+    /* move tcp client to transmitor thread */
+    tcpClient.moveToThread(ARCS::A0_Transmitor->getThread());
 }
 /*$ SystemSetDialog::clientDisConnected()...................................*/
 void SystemSetDialog::clientDisConnected(void) {
@@ -128,6 +130,11 @@ int SystemSetDialog::send_s(void const * const buf, int sendLen) {
             memcpy(datagram,
                 (uint8_t *)buf, sendLen);
             tcpClient.write((char *)datagram, sendLen);
+            tcpClient.flush();
+            qDebug("Send Data:\t");
+            for (int i = 0; i < sendLen; i++) {
+                qDebug("%02x ", datagram[i]);
+            }
             free(datagram);
         }
         ret = sendLen;
@@ -145,6 +152,7 @@ int SystemSetDialog::recv_s(void * const buf, int bufSize) {
                 tcpClient.read((char *)datagram, reLen);
                 memcpy((uint8_t * const)buf,
                     datagram, reLen);
+                qDebug("recv data From Server(len = %d)\n", reLen);
                 free(datagram);
             }
         }

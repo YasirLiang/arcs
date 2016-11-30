@@ -54,6 +54,8 @@ MainSurface::MainSurface(QWidget *parent)
     else {
         /* no else case */
     }
+    /* set current terminal id */
+    idComboBoxValChanged();
     /* set current camera number */
     s = curcameraComboBox->currentText();
     curCamera = s.toInt(&ok, 10);

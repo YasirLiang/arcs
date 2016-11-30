@@ -22,6 +22,7 @@
 #include "extern_port.h"
 #include "protocal_qt.h"
 #include "transmitor.h"
+#include "systemset.h"
 /*$ Qt Tcp socket get Vtbl..................................................*/
 TExternPortVtbl const * QtPortTcpSocket_getVtbl(void);
 /*$ QtTcpSocket::setTcpSocket()..............................................*/
@@ -85,6 +86,9 @@ Transmitor::Transmitor()
 #endif
     }
 }
+/*$ Transmitor::~Transmitor()...............................................*/
+Transmitor::~Transmitor() {
+}
 /*$ Transmitor::active()....................................................*/
 bool Transmitor::initialRecvBufList(void) {
     /* new space and initial
@@ -128,6 +132,7 @@ QP::QState Transmitor::initial(Transmitor * const me,
     for (uint8_t i = 0; i < EXTERN_PORT_NUM; ++i) {
         port[i]->init();
     }
+
     /* void unused */
     (void)e;
     /* tran state table */
@@ -296,7 +301,7 @@ void Transmitor::qtCharMsgPro(void) {
         }
         else if (pRingPro->msgLen == 6) {
             l_msgPro.dataLen = (((uint16_t)ch) << 8) & 0xff00;
-            if (l_msgPro.dataLen > QT_ET_RECV_BUF_SIZE) {
+            if (l_msgPro.dataLen > PRO_QT_MAX) {
                 pRingPro->msgLen = 0;
             }
             else {/* Not out of rang s*/

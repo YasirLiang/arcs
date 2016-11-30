@@ -18,6 +18,7 @@
 */
 #include "user.h"
 #include "mainwidget.h"
+#include "systemset.h"
 
 /*..........................................................................*/
 #if 0
