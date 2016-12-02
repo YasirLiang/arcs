@@ -4,8 +4,9 @@
 * @ingroup system setting dialog
 * @cond
 ******************************************************************************
+* Build Date on  2016-10-20
 * Last updated for version 1.0.0
-* Last updated on  2016-10-20
+* Last updated on  2016-12-1
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -70,6 +71,12 @@ SystemSetDialog::SystemSetDialog(QWidget * parent)
     connect(&tcpClient, SIGNAL(error(QAbstractSocket::SocketError)),
         this, SLOT(displayError(QAbstractSocket::SocketError)));
 }
+/*closeEvent()..............................................................*/
+void SystemSetDialog::closeEvent(QCloseEvent *event) {
+    qDebug("SystemSetDialog recieve Close Event");
+    this->hide();
+    event->ignore();
+}
 /*$ SystemSetDialog::displayError().........................................*/
 void SystemSetDialog::displayError(QAbstractSocket::SocketError socketErr) {
     if (socketErr == QTcpSocket::RemoteHostClosedError) {
@@ -88,8 +95,6 @@ void SystemSetDialog::clientConnected(void) {
     /* can set connect server successful */
     qDebug("Connect to Server success( %s-%d )\n",
         (char *)&tcpIp, tcpPort);
-    /* move tcp client to transmitor thread */
-    tcpClient.moveToThread(ARCS::A0_Transmitor->getThread());
 }
 /*$ SystemSetDialog::clientDisConnected()...................................*/
 void SystemSetDialog::clientDisConnected(void) {
@@ -101,6 +106,7 @@ void SystemSetDialog::clientDisConnected(void) {
 /*$ SystemSetDialog::qtPortReady()..........................................*/
 void SystemSetDialog::qtPortReady(void) {
     if (avail) {
+        qDebug("qtPortReady()\n");
         /* publish port readable signal */
         ARCS::A0_Transmitor->POST(&qtCltRdEvt, (void*)0);
     }
@@ -131,10 +137,6 @@ int SystemSetDialog::send_s(void const * const buf, int sendLen) {
                 (uint8_t *)buf, sendLen);
             tcpClient.write((char *)datagram, sendLen);
             tcpClient.flush();
-            qDebug("Send Data:\t");
-            for (int i = 0; i < sendLen; i++) {
-                qDebug("%02x ", datagram[i]);
-            }
             free(datagram);
         }
         ret = sendLen;
@@ -152,7 +154,6 @@ int SystemSetDialog::recv_s(void * const buf, int bufSize) {
                 tcpClient.read((char *)datagram, reLen);
                 memcpy((uint8_t * const)buf,
                     datagram, reLen);
-                qDebug("recv data From Server(len = %d)\n", reLen);
                 free(datagram);
             }
         }

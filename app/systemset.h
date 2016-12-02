@@ -4,8 +4,9 @@
 * @ingroup system setting dialog
 * @cond
 ******************************************************************************
+* Build Date on  2016-10-20
 * Last updated for version 1.0.0
-* Last updated on  2016-10-20
+* Last updated on  2016-12-1
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -36,6 +37,7 @@ public:
     static ARCS::PortEvt qtCltRdEvt;
     TExternPortVtbl vTable;
     SystemSetDialog(QWidget * parent = 0);
+    void closeEvent(QCloseEvent *event);
     void setTcpSocket(char const * const pip,
         int _port);
     static SystemSetDialog *instance(void);

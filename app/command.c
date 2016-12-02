@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h> /*! memset/memcpy declaration */
+#include <stdbool.h>
 #include "list.h"
 #include "request.h"
 #include "command.h"
@@ -73,6 +74,7 @@ void CmdQueue_elemInitial(TCmdQElem *elem, uint32_t cmdId,
     uint8_t const * const buf, TPSpeCmdFunc const pSpeF)
 {
     elem->id = cmdId;
+    elem->curEReq = (uint32_t)0; /* not generate yet */
     elem->type = type;
     elem->user = user;
     elem->execStatus = NO_START;
@@ -88,6 +90,14 @@ void CmdQueue_elemInitial(TCmdQElem *elem, uint32_t cmdId,
         memcpy(elem->cmdBuf, buf, dataLen);
     }
     elem->run = pSpeF;
+}
+/*! CmdQueue_updateCurReq...................................................*/
+void CmdQueue_updateCurReq(TPCmdQueueNode const pIn,
+    uint32_t const reqId)
+{
+    if (pIn->elem.curEReq != reqId) {
+        pIn->elem.curEReq = reqId;
+    }
 }
 /*! CmdQueue_nodeDestroy....................................................*/
 void CmdQueue_nodeDestroy(TPCmdQueueNode *tg) {

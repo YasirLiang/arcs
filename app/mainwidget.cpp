@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-10-20
 * Last updated for version 1.0.0
-* Last updated on  2016-11-21
+* Last updated on  2016-12-2
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -18,6 +18,7 @@
 */
 /*Incluing file-------------------------------------------------------------*/
 #include <QtWidgets>
+#include <fstream>
 #include "user.h"
 #include "systemset.h"
 #include "mainwidget.h"
@@ -96,10 +97,20 @@ MainSurface::MainSurface(QWidget *parent)
     curInput = 1;
     /* create system set dialog */
     sysDlg = new SystemSetDialog(this);
+    /* create system update proccess bar */
+    pSysUpatePro = new QProgressDialog(this);
+    pSysUpatePro->setWindowTitle(tr("UpLoad Process"));
+    pSysUpatePro->setLabelText(tr("Transfering...")); 
+    pSysUpatePro->setCancelButtonText(tr("cancel"));
+    pSysUpatePro->setModal(false);
+    pSysUpatePro->hide();
     /* set result to NULL */
     setResult("Result:");
     /* set status to Ready */
     setStatus("Status: Ready");
+    pBytesToWriteBuf = (uint8_t *)0;
+    totalBytes = 0;
+    bytesToWrite = 0;
     connect(zoomPushBtn, SIGNAL(clicked()), this, SLOT(add()));
     connect(beginPushBtn, SIGNAL(clicked()), this, SLOT(begin()));
     connect(curcameraSwPushBtn, SIGNAL(clicked()),
@@ -145,13 +156,27 @@ MainSurface::MainSurface(QWidget *parent)
         this, SLOT(outputComboBoxValChanged()));
      connect(idComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(idComboBoxValChanged()));
+     connect(beginSysPushBtn, SIGNAL(clicked()),
+        this, SLOT(beginSystem()));
+     connect(stopSysPushBtn, SIGNAL(clicked()),
+        this, SLOT(stopSystem()));
+     connect(updateSysPushBtn, SIGNAL(clicked()),
+        this, SLOT(updateSystem()));
+     /* tap to process cancel event */
+     connect(pSysUpatePro, SIGNAL(canceled()),
+        this, SLOT(cancelProcessBars()));
 }
 /*~MainSurface()............................................................*/
 MainSurface::~MainSurface(void) {
     qDebug("Exit MainSurface");
+    if (pBytesToWriteBuf != (uint8_t *)0) {
+        delete pBytesToWriteBuf;
+        pBytesToWriteBuf = (uint8_t *)0;
+    }
     delete pLvSpIntValidator;
     delete pVtSpIntValidator;
     delete sysDlg;
+    delete pSysUpatePro;
 }
 /*closeEvent()..............................................................*/
 void MainSurface::closeEvent(QCloseEvent *event) {
@@ -183,6 +208,51 @@ void MainSurface::setResult(char const * const result_) {
     if (result_ != (char *)0) {
         resultLabel->setText(tr(result_));
     }
+}
+/*setE64_u64()..............................................................*/
+void MainSurface::setE64_u64(uint8_t *const buf, uint64_t const ie64) {
+    for (int i = 0; i < 8; i++) {
+        buf[i] = (uint8_t)(ie64 >> (i * 8));
+    }
+}
+/*loadUpdateData()..........................................................*/
+uint64_t MainSurface::loadUpdateData(uint8_t * const buf,
+    uint64_t reqSize)
+{
+    uint64_t lLen, pos; /* load len */
+    if ((buf == (uint8_t *const)0)
+         || (totalBytes == 0)
+         || (bytesToWrite == 0)
+         || (pBytesToWriteBuf == (uint8_t *)0))
+    {
+        return 0;
+    }
+    /* get buffer pos to read */
+    pos = totalBytes - bytesToWrite;
+    if (bytesToWrite > reqSize) {
+        memcpy(buf,
+            &pBytesToWriteBuf[pos],
+            reqSize);
+        lLen = reqSize;
+        bytesToWrite -= reqSize;
+    }
+    else if (bytesToWrite != 0) {
+        memcpy(buf,
+            &pBytesToWriteBuf[pos],
+            bytesToWrite);
+        lLen = bytesToWrite;
+        bytesToWrite = 0;
+    }
+    else {
+        lLen = 0; /* transmit done */
+    }
+    /* return len, and zero means transmit done */
+    return lLen;
+}
+/*updateBarProccess().......................................................*/
+void MainSurface::updateBarProccess(void) {
+/* invoked only when request called success */ 
+    pSysUpatePro->setValue(totalBytes - bytesToWrite);
 }
 /*add().....................................................................*/
 void MainSurface::add(void) {
@@ -631,7 +701,7 @@ void MainSurface::regain(void) {
 /*setSys()..................................................................*/
 void MainSurface::setSys(void) {
     if (!uiLocked) {
-
+        sysDlg->show();
     }
     else {
         QMessageBox::information(this, "Request Waitting....",
@@ -889,3 +959,153 @@ void MainSurface::idComboBoxValChanged(void) {
     qDebug(" curId  = %d\n", curId );
 }
 
+void MainSurface::beginSystem(void) {
+    if (!uiLocked) {
+        e.id = ++requstId;
+        e.type = SET_SYS;
+        /*high four bits is opt type, and low four bits means opt code */
+        e.buf[0] &= ~0xff; /* clear buf */
+        e.buf[0] |= 0x03; /* begin server system */
+        e.buflen = (uint8_t)1;
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");
+        /* lock ui until last request being finished */
+        lockUi();
+    }
+    else {
+        QMessageBox::information(this, "Request Waitting....",
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
+    }
+}
+
+void MainSurface::stopSystem(void) {
+    if (!uiLocked) {
+        e.id = ++requstId;
+        e.type = SET_SYS;
+        /*high four bits is opt type, and low four bits means opt code */
+        e.buf[0] &= ~0xff; /* clear buf */
+        e.buf[0] |= 0x01; /* stop server system */
+        e.buflen = (uint8_t)1;
+        /* post event to Controller active object */
+        ARCS::A0_Controller->POST(&e, this);
+        /* set result to NULL */
+        setResult("Result:");
+        /* set status to Excuting */
+        setStatus("Status: Excuting");
+        /* lock ui until last request being finished */
+        lockUi();
+    }
+    else {
+        QMessageBox::information(this, "Request Waitting....",
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
+    }
+}
+
+void MainSurface::updateSystem(void) {
+    QString fileName;
+    /* set request */
+    if (!uiLocked) {
+        if (pBytesToWriteBuf != (uint8_t *)0) {
+            /* free last time space */
+            delete pBytesToWriteBuf;
+            pBytesToWriteBuf = (uint8_t *)0;
+        }
+        
+        bytesToWrite = 0;
+        totalBytes = 0;
+        fileName = QFileDialog::getOpenFileName(this);
+        if (!fileName.isEmpty()) {
+            char *msg;
+            QByteArray ba = fileName.toLatin1(); 
+            msg = ba.data();
+            std::ifstream file;
+            qDebug("fileName = %s", msg);
+            file.open(msg, std::ios::binary|std::ios::ate);
+            int fileSize = file.tellg();
+            qDebug("fileSize = %d", fileSize);
+            char* fileBuf = new char[fileSize];
+            file.seekg(0, std::ios::beg);
+            file.read(fileBuf, fileSize);
+            file.close();
+            
+            totalBytes = (uint64_t)fileSize;
+            
+            char *pCurFile;
+            QString currentFile = fileName.right(fileName.size() -
+                fileName.lastIndexOf('/') - 1);
+            QByteArray pCurFileArray = currentFile.toLatin1();  
+            pCurFile = pCurFileArray.data();
+            qDebug("CurFile = %s", pCurFile);
+            int fileNameSize = strlen(pCurFile);
+            qDebug("fileNameSize = %d", fileNameSize);
+            
+            totalBytes += (uint64_t)fileNameSize;
+            qDebug("totalBytes = %lld", totalBytes);
+            
+            char *totalBuf = new char[totalBytes];
+            memcpy(totalBuf, pCurFile, fileNameSize);
+            memcpy(totalBuf + fileNameSize, fileBuf, fileSize);
+            
+            pBytesToWriteBuf = (uint8_t *)totalBuf;
+            bytesToWrite = totalBytes;
+            
+            delete fileBuf;
+            if (QMessageBox::question(this,
+                            "Update System",
+                            "Press Yes to Confirm Update\n"
+                            "Or No to cancel Update",
+                            QMessageBox::Yes,
+                            QMessageBox::No) == QMessageBox::Yes) {
+                e.id = ++requstId;
+                e.type = SET_SYS;
+                /*high four bits is opt type,
+                    and low four bits means opt code */
+                e.buf[0] &= ~0xff; /* clear buf */
+                e.buf[0] |= 0x05;  /* update server system */
+                e.buf[1] = 0x10;   /* total len and file name len */
+                /* set total len */
+                setE64_u64(&e.buf[2], totalBytes);
+                /* set file name length */
+                setE64_u64(&e.buf[10], fileNameSize);
+                e.buflen = (uint8_t)0x12;
+                /* post event to Controller active object */
+                ARCS::A0_Controller->POST(&e, this);
+                /* set result to NULL */
+                setResult("Result:");
+                /* set status to Excuting */
+                setStatus("Status: Excuting");
+                pSysUpatePro->setRange(0, totalBytes);  
+                pSysUpatePro->setModal(true);
+                /* lock ui until last request being finished */
+                lockUi();
+            }
+            else {
+                totalBytes = 0;
+                bytesToWrite = 0;
+                if (pBytesToWriteBuf != (uint8_t *)0) {
+                    free(pBytesToWriteBuf);
+                    pBytesToWriteBuf = (uint8_t *)0;
+                }
+            }
+        }
+    }
+    else {
+        QMessageBox::information(this, "Request Waitting....",
+            "Please waitting last requst finish......", QMessageBox::Ok,
+            0, 0);
+    }
+}
+void MainSurface::cancelProcessBars(void) {
+    totalBytes = 0;
+    bytesToWrite = 0;
+    if (pBytesToWriteBuf != (uint8_t *)0) {
+        free(pBytesToWriteBuf);
+        pBytesToWriteBuf = (uint8_t *)0;
+    }
+}

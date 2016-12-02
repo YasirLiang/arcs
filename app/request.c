@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "list.h"
 #include "request.h"
 /*$ RequestList::addTrail().................................................*/
@@ -30,6 +31,62 @@ void RequestList_addTrail(struct list_head *list, TPRequestNode nw) {
 void RequestList_nodeInit(TPRequestNode n,TRequestElem *in) {
     INIT_LIST_HEAD(&in->statusList);
     n->in = in;
+}
+/*$ RequestList::statusCorrect()............................................*/
+bool RequestList_statusCorrect(struct list_head *list,
+    TEHandledType hT, TUptc ptc, uint32_t selfCmd, uint32_t reStatus)
+{
+    bool ok = (bool)0;
+    TPRStatusNode sts = (TPRStatusNode)0;
+    list_for_each_entry(sts, list, list) {
+        if ((hT == INFLIGHT_HD)
+              && (sts->hType == INFLIGHT_HD))
+        {
+            TRequestState *pstElmt = (TRequestState *)0;
+            pstElmt = (TRequestState*)(sts->statusElem);
+            if (pstElmt != (TRequestState*)0) {
+                if ((pstElmt->ptc.subType == ptc.subType)
+                      && (pstElmt->ptc.type == ptc.type)
+                      && (pstElmt->selfCmd == selfCmd)
+                      && (pstElmt->reStatus == reStatus))
+                {
+                    ok = (bool)1;
+                    break;
+                }
+            }
+        }
+        else {
+            /* when other status type define,
+                must add corresponding code here(2016-12-1)*/
+        }
+    }
+    return ok;
+}
+/*$ RequestList::statusAllCorrect().........................................*/
+bool RequestList_statusAllCorrect(struct list_head *list,
+    TEHandledType hT, uint32_t reStatus)
+{
+    bool noOk = (bool)0;
+    TPRStatusNode sts = (TPRStatusNode)0;
+    list_for_each_entry(sts, list, list) {
+        if (sts->hType == INFLIGHT_HD) {
+            TRequestState *pstElmt = (TRequestState *)0;
+            pstElmt = (TRequestState *)(sts->statusElem);
+            if (pstElmt != (TRequestState*)0) {
+                if (pstElmt->reStatus != reStatus)
+                {
+                    noOk = (bool)1;
+                    break;
+                }
+            }
+        }
+        else {
+            /* when other status type define,
+                must add corresponding code here(2016-12-1)*/
+        }
+    }
+    /* include empty list, if list empty, return 0*/
+    return (!noOk);
 }
 /*$ RequestList::statusListDestroy()........................................*/
 void RequestList_statusListDestroy(struct list_head *list) {
@@ -54,6 +111,9 @@ void RequestList_destroy(struct list_head *head) {
          __list_del_entry(&pos->list);
         /* release status node */
         RequestList_statusListDestroy(&pos->in->statusList);
+        if (pos->in != (TRequestElem *)0) {
+            free(pos->in); /* for framework free */
+        }
         pos->in = (TRequestElem*)0;
         /* Free space */
         free(pos);
@@ -88,7 +148,8 @@ void RequestStatusList_nodeInsert(TPRequestNode reqNode,
 }
 /*$ Request::saveStatusToList...............................................*/
 void Request_saveStatusToList(TEHandledType hType, uint8_t type,
-    uint16_t subtype, uint32_t reStatus, struct list_head *statusList)
+    uint16_t subtype, uint32_t reStatus,
+    uint32_t selfCmd, struct list_head *statusList)
 {
     TRequestState *status;
     TPRStatusNode statusNode;
@@ -99,6 +160,7 @@ void Request_saveStatusToList(TEHandledType hType, uint8_t type,
             status->ptc.subType = subtype;
             status->ptc.type = type;
             status->reStatus = reStatus;
+            status->selfCmd = selfCmd;
             statusNode->hType = hType;
             statusNode->statusElem = status;
             list_add_tail(&statusNode->list, statusList);
@@ -107,5 +169,21 @@ void Request_saveStatusToList(TEHandledType hType, uint8_t type,
             free(statusNode);
         }
     }
+}
+
+/*$ Request::Request_elemtUpdate............................................*/
+void Request_elemtUpdate(TRequestElem const * const pIn,
+    TRequestElem * const pT)
+{
+    pT->id = pIn->id;
+    pT->cmdId = pIn->cmdId;
+    pT->type = pIn->type;
+    pT->user = pIn->user;
+    pT->status = pIn->status;
+    INIT_LIST_HEAD(&pT->statusList);
+    pT->buflen = pIn->buflen;
+    memset(pT->buf, 0, REQUEST_BUF_SIZE);
+    memcpy(pT->buf, pIn->buf, pT->buflen);
+    pT->run = pIn->run;
 }
 

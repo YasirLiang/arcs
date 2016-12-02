@@ -53,6 +53,7 @@ typedef enum TECmdStatus {
 /*! user cmd queue element */
 typedef struct TCmdQElem {
     uint32_t id;                  /*! local generate id */
+    uint32_t curEReq;             /*! current excute Req id */
     TECmdType type;               /*! type for command */
     TECmdUser user;               /*! user for command */
     TECmdStatus execStatus;       /*! command execute status */
@@ -101,6 +102,9 @@ int CmdQueue_getCount(TPCmdQueue root);
 void CmdQueue_elemInitial(TCmdQElem *elem, uint32_t cmdId,
     TECmdType type, TECmdUser user, uint16_t dataLen,
     uint8_t const * const buf, TPSpeCmdFunc const pSpeF);
+/*! CmdQueue_updateCurReq---------------------------------------------------*/
+void CmdQueue_updateCurReq(TPCmdQueueNode const pIn,
+    uint32_t const reqId);
 /*! CmdQueue_nodeDestroy----------------------------------------------------*/
 void CmdQueue_nodeDestroy(TPCmdQueueNode *tg);
 /*! Cmd_run-----------------------------------------------------------------*/

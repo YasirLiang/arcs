@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-11-23
 * Last updated for version 1.0.0
-* Last updated on  2016-11-24
+* Last updated on  2016-12-1
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -60,7 +60,7 @@ bool RingBuffer_saveChar(TCharRingBuf *rBuf, uint8_t saveCh) {
         rBuf->trail %= rBuf->bufSize;
         /* save char ,buffer is not empty */
         if (rBuf->empty) {
-            rBuf->empty = false;
+            rBuf->empty = (bool)0;
         }
         /* set get char succussfully */
         bret = (bool)1;
@@ -81,7 +81,7 @@ bool RingBuffer_getChar(TCharRingBuf *rBuf, uint8_t *pGetCh) {
         *pGetCh = rBuf->pBuf[rBuf->head++];
         rBuf->head %= rBuf->bufSize;
         if (rBuf->head == rBuf->trail) {
-            rBuf->empty = true;
+            rBuf->empty = (bool)1;
         }
         /* set get char succussfully */
         bret = (bool)1;

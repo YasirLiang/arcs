@@ -99,6 +99,7 @@ QP::QState Commander::active(Commander * const me,
     QP::QState status_;
     TPCmdQueueNode cmdQNode = (TPCmdQueueNode)0;
     TPRequestNode pReq = (TPRequestNode)0;
+    TRequestElem const *pReqElt = (TRequestElem const *)0;
     /* idle state table */
     static struct {
         QP::QMState const *target;
@@ -146,13 +147,26 @@ QP::QState Commander::active(Commander * const me,
                 node and dispatch it to 'reQ'.Otherwise, release
                 all current work queue node space, including all
                 request information. */
-            me->pReqElem = (TRequestElem *)Cmd_run(me->curWorkQnode);
-            if ((me->pReqElem != (TRequestElem*)0)
+            pReqElt = (TRequestElem *)Cmd_run(me->curWorkQnode);
+            /* update request id in work node */
+            qDebug("[Commander(active) update current  ReqId(%d)]",
+                me->curEReqId);
+            CmdQueue_updateCurReq(me->curWorkQnode, me->curEReqId);
+            if ((pReqElt != (TRequestElem*)0)
                   && (me->curWorkQnode->elem.execStatus
                         == REQUEST_EXECUTING)) {
                 /* command is not finishing, allot for request node */
                 Q_ASSERT(me->curWorkQnode->elem.execStatus
                         == REQUEST_EXECUTING);
+                /* for framework request element malloc */
+                me->pReqElem = (TRequestElem *)malloc(sizeof(TRequestElem));
+                if (me->pReqElem != (TRequestElem *)0) {
+                    Request_elemtUpdate(pReqElt, me->pReqElem);
+                }
+                else {
+                    Q_ASSERT(0);
+                }
+                /* for framework request node malloc */
                 pReq = (TPRequestNode)malloc(sizeof(TRequestNode));
                 if (pReq != (TPRequestNode)0) {
                     /* initial request node */
@@ -160,11 +174,18 @@ QP::QState Commander::active(Commander * const me,
                     /* push to link list */
                     RequestList_addTrail(&me->curWorkQnode->elem.requestHead,
                         pReq);
+                    qDebug("[Commander(active) Insert ReqId(%d)]",
+                        pReq->in->id);
                     /* publish new request to requester */
                     RequestElemEvt ere(me->pReqElem);
                     me->reQ->dispatch(&ere);
                     /* update current executable request id */
+                    qDebug("[Commander(active) 2 update current  ReqId(%d)]",
+                        me->pReqElem->id);
                     me->curEReqId = me->pReqElem->id;
+                    qDebug("[Commander(active) Req update current  ReqId(%d)]",
+                        me->curEReqId);
+                    CmdQueue_updateCurReq(me->curWorkQnode, me->curEReqId);
                     /* current request run done */
                     if (me->pReqElem->status == REQ_SUCCESS) {
                         /* run next request */
@@ -245,6 +266,7 @@ QP::QState Commander::idle(Commander * const me,
     QP::QState status_;
     TPRequestNode pReq = (TPRequestNode)0;
     struct list_head *list_;
+    TRequestElem const *pReqElt = (TRequestElem const *)0;
     switch (e->sig) {
         case COMMAND_SIG: {
             qDebug("[Commander(idle) recieve COMMAND_SIG]");
@@ -264,14 +286,25 @@ QP::QState Commander::idle(Commander * const me,
             Q_ASSERT(me->curWorkQnode != (TPCmdQueueNode)0);
             /* directly excecut Command function and don't need
                  to push to command working queue */
-            me->pReqElem = (TRequestElem *)Cmd_run(me->curWorkQnode);
-            if ((me->pReqElem != (TRequestElem*)0)
+            pReqElt = (TRequestElem *)Cmd_run(me->curWorkQnode);
+            /* update request id in work node */
+            CmdQueue_updateCurReq(me->curWorkQnode, me->curEReqId);
+            if ((pReqElt != (TRequestElem*)0)
                   && (me->curWorkQnode->elem.execStatus
                             == REQUEST_EXECUTING))
             {
                 /* local generate request */
                 qDebug("[Command Requst Executing %d, %d]",
                     me->curWorkQnode->elem.id, me->curEReqId);
+                /* for framework request element malloc */
+                me->pReqElem = (TRequestElem *)malloc(sizeof(TRequestElem));
+                if (me->pReqElem != (TRequestElem *)0) {
+                    Request_elemtUpdate(pReqElt, me->pReqElem);
+                }
+                else {
+                    Q_ASSERT(0);
+                }
+                /* for framework request node malloc */
                 /* command is not finishing, allot for request node */
                 pReq = (TPRequestNode)malloc(sizeof(TRequestNode));
                 if (pReq != (TPRequestNode)0) {
@@ -285,6 +318,10 @@ QP::QState Commander::idle(Commander * const me,
                     me->reQ->dispatch(&ere);
                     /* update current executable request id */
                     me->curEReqId = me->pReqElem->id;
+                    qDebug("[Commander(idle) Req "
+                        "update current  ReqId(%d)]",
+                        me->curEReqId);
+                    CmdQueue_updateCurReq(me->curWorkQnode, me->curEReqId);
                     /* current request run done */
                     if (me->pReqElem->status == REQ_SUCCESS) {
                         me->requestRun(me);
@@ -376,12 +413,24 @@ void Commander::requestRun(Commander * const me) {
          'reqExeStatus' and transfered under prev
          request function successfully */
     TPRequestNode pReq = (TPRequestNode)0;
+    TRequestElem const *pReqElt = (TRequestElem const *)0;
     RequestDoneEvt e(me->curEReqId);
     /* make sure requestor can run request */
     me->reQ->dispatch(&e);
     /* run command again */
-    me->pReqElem = (TRequestElem *)Cmd_run(me->curWorkQnode);
-    if (me->pReqElem != (TRequestElem*)0) {
+    pReqElt = (TRequestElem *)Cmd_run(me->curWorkQnode);
+    /* update request id in work node */
+    CmdQueue_updateCurReq(me->curWorkQnode, me->curEReqId);
+    if (pReqElt != (TRequestElem*)0) {
+        /* for framework request element malloc */
+        me->pReqElem = (TRequestElem *)malloc(sizeof(TRequestElem));
+        if (me->pReqElem != (TRequestElem *)0) {
+            Request_elemtUpdate(pReqElt, me->pReqElem);
+        }
+        else {
+            Q_ASSERT(0);
+        }
+        /* for framework request node malloc */
         /* command is not finishing, allot for request node */
         Q_ASSERT(me->curWorkQnode->elem.execStatus == REQUEST_EXECUTING);
         pReq = (TPRequestNode)malloc(sizeof(TRequestNode));
@@ -396,6 +445,10 @@ void Commander::requestRun(Commander * const me) {
             me->reQ->dispatch(&e_);
             /* update current executable request id */
             me->curEReqId = me->pReqElem->id;
+            qDebug("[Commander(requestRun) Req"
+                " update current  ReqId(%d)]",
+                        me->curEReqId);
+            CmdQueue_updateCurReq(me->curWorkQnode, me->curEReqId);
             /* current request run done */
             if (me->pReqElem->status == REQ_SUCCESS) {
                 /* recursion request run until current request 
@@ -414,6 +467,7 @@ void Commander::queueCmdRun(Commander * const me) {
 /* current command be finished, user make decision to
     execute success!*/
     TPRequestNode pReq = (TPRequestNode)0;
+    TRequestElem const *pReqElt = (TRequestElem const *)0;
     /* destroy request head list */
     RequestList_destroy(&me->curWorkQnode->elem.requestHead);
     /* release commander status list */
@@ -428,10 +482,21 @@ void Commander::queueCmdRun(Commander * const me) {
         Commander Queue */
     me->curWorkQnode = CmdQueue_pop(&me->cmdQueue);
     if (me->curWorkQnode != (TPCmdQueueNode)0) {
-        me->pReqElem = (TRequestElem *)Cmd_run(me->curWorkQnode);
-        if (me->pReqElem != (TRequestElem*)0) {
+        pReqElt = (TRequestElem *)Cmd_run(me->curWorkQnode);
+        /* update request id in work node */
+        CmdQueue_updateCurReq(me->curWorkQnode, me->curEReqId);
+        if (pReqElt != (TRequestElem*)0) {
             /* command is not finishing, allot for request node */
             Q_ASSERT(me->curWorkQnode->elem.execStatus == REQUEST_EXECUTING);
+            /* for framework request element malloc */
+            me->pReqElem = (TRequestElem *)malloc(sizeof(TRequestElem));
+            if (me->pReqElem != (TRequestElem *)0) {
+                Request_elemtUpdate(pReqElt, me->pReqElem);
+            }
+            else {
+                Q_ASSERT(0);
+            }
+            /* for framework request node malloc */
             pReq = (TPRequestNode)malloc(sizeof(TRequestNode));
             if (pReq != (TPRequestNode)0) {
                 /* initial request node */
@@ -444,6 +509,10 @@ void Commander::queueCmdRun(Commander * const me) {
                 me->reQ->dispatch(&e);
                 /* update current executable request id */
                 me->curEReqId = me->pReqElem->id;
+                qDebug("[Commander(queueCmdRun) "
+                    "Req update current  ReqId(%d)]",
+                        me->curEReqId);
+                CmdQueue_updateCurReq(me->curWorkQnode, me->curEReqId);
                 /* current request run done */
                 if (me->pReqElem->status == REQ_SUCCESS) {
                     me->requestRun(me);

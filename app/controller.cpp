@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-11-1
 * Last updated for version 1.0.0
-* Last updated on  2016-11-28
+* Last updated on  2016-12-1
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -142,6 +142,7 @@ QP::QState Controller::serving(Controller * const me,
             /* analysis data and generate command */
             rxPacketEvent(e_->port,
                 e_->buf, e_->datalen);
+            status_ = QM_HANDLED();
             break;
         }
         case REQUEST_SIG: {
@@ -288,7 +289,7 @@ int Controller::serverDataHandle(uint8_t const * const rxBuf,
             }
             /* save reponse to status to list (command or request) */
             Request_saveStatusToList(INFLIGHT_HD, QT_PTC,
-                    0, reState, reList);
+                    0, reState, buf->cmd, reList);
         }
         /* look for each inflight list, if no such inflight node,
              send request signal to */
@@ -399,10 +400,14 @@ void Controller::tickQtInflight(void) {
     uint32_t notifyId;
     bool matchCmd;
     bool reqDone;
+    uint8_t ptCmd;
     struct list_head *reList;
     list_for_each_entry_safe(pos, n, &inflight[QT_INFLIGHT], list) {
         if (Inflight_timeout(pos)) {
             if (Inflight_retried(pos)) {
+                /* get self protocal cmd */
+                ProtocalQt_readCmd(pos->pBuf, 
+                    pos->dataLen, (int)4, &ptCmd);
                 /* get some information before destroy */
                 wkCmdId = pos->cmdId;
                 notifyId = pos->cmdNotificationId;
@@ -410,7 +415,7 @@ void Controller::tickQtInflight(void) {
                 qDebug("[TIMEOUT %d, %d, %d, %d, %d]",
                     QT_INFLIGHT, pos->cmdSeqId,
                     pos->cmdId, pos->cmdNotificationId,
-                    ((TProtocalQt*)pos->pBuf)->cmd);
+                    ((TProtocalQt *)pos->pBuf)->cmd);
                 /* destroy */
                 Inflight_nodeDestroy(&pos);
                 /* match command id? */
@@ -435,7 +440,7 @@ void Controller::tickQtInflight(void) {
                     }
                     /* save reponse to status to list (command or request) */
                     Request_saveStatusToList(INFLIGHT_HD, QT_PTC,
-                            0, QTIMEOUT, reList);/* set request status */
+                            0, QTIMEOUT, ptCmd, reList);
                 }
                 /* look for each inflight list, if no such inflight node,
                      send request signal to */

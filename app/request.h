@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-11-2
 * Last updated for version 1.0.0
-* Last updated on  2016-11-2
+* Last updated on  2016-12-1
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -45,9 +45,11 @@ typedef enum TRequestUser {
 }TRequestUser;
 /*! the execute status of Request */
 typedef enum TReqExeStatus {
-    REQ_SUCCESS,   /*! executed successful */
-    REQ_DOING,     /*! request doing */
-    REQ_TERMINATE, /*! request terminate */
+    REQ_SUCCESS,    /*! executed successful */
+    REQ_NO_START,   /*! no start  */
+    REQ_EXEC_PAUSE, /*! pause by user */
+    REQ_EXECUTING,  /*! excuting */
+    REQ_TERMINATE,  /*! request terminate by user*/
 }TReqExeStatus;
 /*! Request information struct define */
 typedef struct TRequestElem {
@@ -81,12 +83,14 @@ typedef enum TEHandledType {
 #define PTC_1722_1_ACMP 0x0204
 /*! adp subtye 0x0300 not including 1722.1 */
 #define PTC_1722_1_AECP 0x0304
+typedef union TUptc{
+    uint16_t subType; /*! subtype of transfer protocal */
+    uint8_t type;     /*! type of transfer protocal */
+}TUptc;
 /*! request status */
 typedef struct TRequestState {
-    union {
-        uint16_t subType; /*! subtype of transfer protocal */
-        uint8_t type;     /*! type of transfer protocal */
-    }ptc;
+    TUptc ptc; /* union protocal type controller */
+    uint32_t selfCmd;     /*! user self protocal command */
     uint32_t reStatus;    /*! response status */
 }TRequestState;
 /*! Request executable status */
@@ -104,6 +108,8 @@ typedef struct TRequestNode {
     TRequestElem *in;            /*! point to request node information */
     struct list_head list;       /*! double link list node */
 }TRequestNode, *TPRequestNode;
+
+typedef int (*TPSpeReqFunc)(struct TRequestElem *);
 /*! RequestList_addTrail----------------------------------------------------*/
 void RequestList_addTrail(struct list_head *list, TPRequestNode nw);
 /*! RequestList_nodeInit----------------------------------------------------*/
@@ -121,7 +127,17 @@ void RequestStatusList_nodeInsert(TPRequestNode reqNode,
     TPRStatusNode const _staNode);
 /*! Request_saveStatusToList------------------------------------------------*/
 void Request_saveStatusToList(TEHandledType hType, uint8_t type,
-    uint16_t subtype, uint32_t reStatus, struct list_head *statusList);
+    uint16_t subtype, uint32_t reStatus,
+    uint32_t selfCmd, struct list_head *statusList);
+/*! Request_elemtUpdate-----------------------------------------------------*/
+void Request_elemtUpdate(TRequestElem const * const pIn,
+    TRequestElem * const pT);
+/*! RequestList_statusCorrect-----------------------------------------------*/
+bool RequestList_statusCorrect(struct list_head *list,
+    TEHandledType hT, TUptc ptc, uint32_t selfCmd, uint32_t reStatus);
+/*! RequestList_statusAllCorrect--------------------------------------------*/
+bool RequestList_statusAllCorrect(struct list_head *list,
+    TEHandledType hT, uint32_t reStatus);
 
 #ifdef __cplusplus
 } /* end extern "C" */

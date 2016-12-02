@@ -20,6 +20,7 @@
 #define __MAIN_WIDGET_H__
 
 /*! Including file----------------------------------------------------------*/
+#include <QFile>
 #include "user.h"
 #include "ui_mainwidget.h"
 
@@ -27,10 +28,16 @@
 class MainSurface : public QWidget, public Ui_MainWidget {
     Q_OBJECT
 public:
-    class SystemSetDialog *sysDlg;
     class QValidator *pLvSpIntValidator;
     class QValidator *pVtSpIntValidator;
+    class SystemSetDialog *sysDlg;
+    class QProgressDialog *pSysUpatePro;
     static ARCS::RequestEvt e;
+    uint8_t *pBytesToWriteBuf;
+    uint64_t totalBytes;
+    uint64_t bytesToWrite;
+    bool upDateCel; /* update cel */
+    
     MainSurface(QWidget * parent = 0);
     ~MainSurface(void);
     static MainSurface *instance(void);
@@ -38,6 +45,8 @@ public:
     void unLockUi(void);
     void setStatus(char const * const status_);
     void setResult(char const * const result_);
+    uint64_t loadUpdateData(uint8_t * const buf, uint64_t reqSize);
+    void updateBarProccess(void); 
 private:
     bool uiLocked; /*it's setted to one until user's request is finished. */
     uint32_t requstId;
@@ -59,6 +68,7 @@ private:
     uint16_t queryAddr;
     uint16_t curAddr;
     uint16_t curId;
+    void setE64_u64(uint8_t *const buf, uint64_t const ie64);
 protected:
     /*! override closeEvent() virtual function */
     void closeEvent(QCloseEvent *event);    
@@ -93,6 +103,10 @@ private slots:
     void inputComboBoxValChanged(void);
     void outputComboBoxValChanged(void);
     void idComboBoxValChanged(void);
+    void beginSystem(void);
+    void stopSystem(void);
+    void updateSystem(void);
+    void cancelProcessBars(void);
 };
 
 #endif /* __MAIN_WIDGET_H__ */

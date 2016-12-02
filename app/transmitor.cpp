@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-10-20
 * Last updated for version 1.0.0
-* Last updated on  2016-11-28
+* Last updated on  2016-12-1
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -77,9 +77,6 @@ Transmitor::Transmitor()
         /* initial ring buffer */
         RingBuffer_initial(&ringBuf[i],
             recvBuf[i].bufSize, recvBuf[i].pBuf);
-        /* set StateMachine ring buffer,
-            ring buffer must be initial */
-        PortMsgStateMachine_setRingBuf(&ringBuf[i], i);
 #ifdef INFLIGHT_PSM
         /* get port state machine msm */
         port[i] = PortInflightStateMachine_getIns(i);
@@ -130,6 +127,10 @@ QP::QState Transmitor::initial(Transmitor * const me,
 #endif
     /* initial port state machine msm */
     for (uint8_t i = 0; i < EXTERN_PORT_NUM; ++i) {
+        /* set port inflight StateMachine ring buffer,
+             ring buffer must be initial */
+        PortInflightStateMachine_setRingBuf(&ringBuf[i], i);
+        /* initial Msm */
         port[i]->init();
     }
 
@@ -154,6 +155,7 @@ QP::QState Transmitor::active(Transmitor * const me,
             break;
         }
         case PORTREADABLE_SIG: {
+            qDebug("[Transmitor::active recieve PORTREADABLE_SIG]");
             PortEvt const * const portEvt
                     = static_cast<PortEvt const * const>(e);
             if (portEvt->port == QT_PORT) {
@@ -254,7 +256,6 @@ void Transmitor::qtCharMsgPro(void) {
     TRingMsgPro *pRingPro;
     uint8_t ch; /* char store */
     uint16_t dataLen;
-    uint8_t crc = 0;
     pRingPro = &ringMsgPro[QT_SV_EP];
     if (pRingPro->recvOver) {
         userTimerStart(3, &pRingPro->itvTimer);
@@ -284,11 +285,13 @@ void Transmitor::qtCharMsgPro(void) {
             pRingPro->msgLen = 2;
         }
         else if (pRingPro->msgLen == 2) {
+            /* '=' will clear  data stored last time, must be */
             l_msgPro.seq = (((uint16_t)ch) & 0x00ff);
             pRingPro->msgLen = 3;
         }
         else if (pRingPro->msgLen == 3) {
-            l_msgPro.seq = ((((uint16_t)ch) << 8) & 0xff00);
+            /* '|=' must be */
+            l_msgPro.seq |= ((((uint16_t)ch) << 8) & 0xff00);
             pRingPro->msgLen = 4;
         }
         else if (pRingPro->msgLen == 4) {
@@ -296,11 +299,12 @@ void Transmitor::qtCharMsgPro(void) {
             pRingPro->msgLen = 5;
         }
         else if (pRingPro->msgLen == 5) {
+            /* '=' will clear  data stored last time, must be */
             l_msgPro.dataLen = ((uint16_t)ch) & 0x00ff;
             pRingPro->msgLen = 6;
         }
         else if (pRingPro->msgLen == 6) {
-            l_msgPro.dataLen = (((uint16_t)ch) << 8) & 0xff00;
+            l_msgPro.dataLen |= (((uint16_t)ch) << 8) & 0xff00;
             if (l_msgPro.dataLen > PRO_QT_MAX) {
                 pRingPro->msgLen = 0;
             }
@@ -316,13 +320,16 @@ void Transmitor::qtCharMsgPro(void) {
                 dataLen++;
             }
             else if (dataLen == l_msgPro.dataLen) {
+                uint8_t crc = 0;
                 uint8_t const *p = (uint8_t *)&l_msgPro;
-                for (uint32_t i = 0; i < pRingPro->msgLen; ++i) {
+                for (int i = 0; i < (int)pRingPro->msgLen; ++i) {
                     crc ^= *(p++);
                 }
+                /* set p to not useful */
+                p = (uint8_t const *)0;
+                /* check crc correct */
                 if (crc == ch) {
                     pRingPro->recvOver = (bool)1;
-                    pRingPro->msgLen = 0;
                     userTimerStart(2, &pRingPro->smTimer);
                 }
             }

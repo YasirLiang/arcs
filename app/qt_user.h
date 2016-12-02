@@ -42,5 +42,7 @@ void* ServerCmd_optTerminal(struct TCmdQElem *pElem);
 void* ServerCmd_setTerminalSys(struct TCmdQElem *pElem);
 /*$ */
 void* ServerCmd_cameraControl(struct TCmdQElem *pElem);
+/*$ */
+int QtReq_updateSystem(struct TRequestElem *pElem);
 
 #endif /* __QT_USER_H__ */

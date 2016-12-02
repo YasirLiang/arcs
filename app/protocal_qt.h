@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build Date on  2016-11-11
 * Last updated for version 1.0.0
-* Last updated on  2016-11-11
+* Last updated on  2016-11-30
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -98,7 +98,19 @@ typedef struct TProtocalQtQueryData {
 /*! apply status */
 #define MIC_APPLY 3
 
-static inline int protocalQtFill(TProtocalQt *pIn,
+static inline int ProtocalQt_readCmd(uint8_t const * const pBuf,
+    int bufLen, int pos, uint8_t * const cmd)
+{    
+    if ((bufLen < pos)
+          && (cmd != (uint8_t * const)0))
+    {
+        return -1;
+    }
+    *cmd = pBuf[pos];
+    return 0;
+}
+
+static inline int ProtocalQt_Fill(TProtocalQt *pIn,
     int inLen, uint8_t *pBuf, int bufLen)
 {
     int i;
