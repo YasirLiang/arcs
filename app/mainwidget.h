@@ -36,7 +36,6 @@ public:
     uint8_t *pBytesToWriteBuf;
     uint64_t totalBytes;
     uint64_t bytesToWrite;
-    bool upDateCel; /* update cel */
     
     MainSurface(QWidget * parent = 0);
     ~MainSurface(void);

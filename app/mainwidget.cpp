@@ -857,7 +857,7 @@ void MainSurface::verticalSpeedDoTxtChange(const QString &txt) {
         qDebug("Vertival speed number = %d\n", vertivalSpeed);
     }
 }
-
+/*$ */
 void MainSurface::cmrCtlTypeComboBoxValChanged(void) {
     int index;
     index = cmrCtlTypeComboBox->currentIndex();
@@ -875,7 +875,7 @@ void MainSurface::cmrCtlTypeComboBoxValChanged(void) {
     }
     qDebug(" cmrCtlType = %d\n", cmrCType);
 }
-
+/*$ */
 void MainSurface::curcameraComboBoxValChanged(void) {
     bool ok;
     QString s;
@@ -884,7 +884,7 @@ void MainSurface::curcameraComboBoxValChanged(void) {
     curCamera = (uint8_t)s.toInt(&ok, 10);
     qDebug(" curCamera = %d\n", curCamera);
 }
-
+/*$ */
 void MainSurface::optTypeComboBoxValChanged(void) {
     int index;
     index = optTypeComboBox->currentIndex();
@@ -912,7 +912,7 @@ void MainSurface::optTypeComboBoxValChanged(void) {
     }
     qDebug(" operation type is %d\n", index);
 }
-
+/*$ */
 void MainSurface::optComboBoxValChanged(void) {
     bool ok;
     QString s;
@@ -926,7 +926,7 @@ void MainSurface::optComboBoxValChanged(void) {
     }
     qDebug(" curCamera = %d\n", curAddr);
 }
-
+/*$ */
 void MainSurface::inputComboBoxValChanged(void) {
     bool ok;
     QString s;
@@ -935,7 +935,7 @@ void MainSurface::inputComboBoxValChanged(void) {
     curInput = (uint8_t)s.toInt(&ok, 10);
     qDebug(" curInput = %d\n", curInput);
 }
-
+/*$ */
 void MainSurface::outputComboBoxValChanged(void) {
     bool ok;
     QString s;
@@ -944,7 +944,7 @@ void MainSurface::outputComboBoxValChanged(void) {
     curOutput = (uint8_t)s.toInt(&ok, 10);
     qDebug(" curOutput = %d\n", curOutput);
 }
-
+/*$ */
 void MainSurface::idComboBoxValChanged(void) {
     bool ok;
     QString s;
@@ -958,7 +958,7 @@ void MainSurface::idComboBoxValChanged(void) {
     }
     qDebug(" curId  = %d\n", curId );
 }
-
+/*$ */
 void MainSurface::beginSystem(void) {
     if (!uiLocked) {
         e.id = ++requstId;
@@ -982,7 +982,7 @@ void MainSurface::beginSystem(void) {
             0, 0);
     }
 }
-
+/*$ */
 void MainSurface::stopSystem(void) {
     if (!uiLocked) {
         e.id = ++requstId;
@@ -1006,7 +1006,7 @@ void MainSurface::stopSystem(void) {
             0, 0);
     }
 }
-
+/*$ */
 void MainSurface::updateSystem(void) {
     QString fileName;
     /* set request */
@@ -1101,6 +1101,7 @@ void MainSurface::updateSystem(void) {
             0, 0);
     }
 }
+/*$ */
 void MainSurface::cancelProcessBars(void) {
     totalBytes = 0;
     bytesToWrite = 0;
@@ -1109,3 +1110,4 @@ void MainSurface::cancelProcessBars(void) {
         pBytesToWriteBuf = (uint8_t *)0;
     }
 }
+
