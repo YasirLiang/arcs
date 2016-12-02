@@ -6,7 +6,7 @@
 ******************************************************************************
 * Build date on  2016-10-20
 * Last updated for version 1.0.0
-* Last updated on  2016-11-24
+* Last updated on  2016-12-2
 *
 *                    Moltanisk Liang
 *                    ---------------------------
@@ -149,8 +149,6 @@ QP::QState Commander::active(Commander * const me,
                 request information. */
             pReqElt = (TRequestElem *)Cmd_run(me->curWorkQnode);
             /* update request id in work node */
-            qDebug("[Commander(active) update current  ReqId(%d)]",
-                me->curEReqId);
             CmdQueue_updateCurReq(me->curWorkQnode, me->curEReqId);
             if ((pReqElt != (TRequestElem*)0)
                   && (me->curWorkQnode->elem.execStatus
@@ -174,17 +172,11 @@ QP::QState Commander::active(Commander * const me,
                     /* push to link list */
                     RequestList_addTrail(&me->curWorkQnode->elem.requestHead,
                         pReq);
-                    qDebug("[Commander(active) Insert ReqId(%d)]",
-                        pReq->in->id);
                     /* publish new request to requester */
                     RequestElemEvt ere(me->pReqElem);
                     me->reQ->dispatch(&ere);
                     /* update current executable request id */
-                    qDebug("[Commander(active) 2 update current  ReqId(%d)]",
-                        me->pReqElem->id);
                     me->curEReqId = me->pReqElem->id;
-                    qDebug("[Commander(active) Req update current  ReqId(%d)]",
-                        me->curEReqId);
                     CmdQueue_updateCurReq(me->curWorkQnode, me->curEReqId);
                     /* current request run done */
                     if (me->pReqElem->status == REQ_SUCCESS) {
@@ -318,9 +310,6 @@ QP::QState Commander::idle(Commander * const me,
                     me->reQ->dispatch(&ere);
                     /* update current executable request id */
                     me->curEReqId = me->pReqElem->id;
-                    qDebug("[Commander(idle) Req "
-                        "update current  ReqId(%d)]",
-                        me->curEReqId);
                     CmdQueue_updateCurReq(me->curWorkQnode, me->curEReqId);
                     /* current request run done */
                     if (me->pReqElem->status == REQ_SUCCESS) {
@@ -445,9 +434,6 @@ void Commander::requestRun(Commander * const me) {
             me->reQ->dispatch(&e_);
             /* update current executable request id */
             me->curEReqId = me->pReqElem->id;
-            qDebug("[Commander(requestRun) Req"
-                " update current  ReqId(%d)]",
-                        me->curEReqId);
             CmdQueue_updateCurReq(me->curWorkQnode, me->curEReqId);
             /* current request run done */
             if (me->pReqElem->status == REQ_SUCCESS) {
@@ -509,9 +495,6 @@ void Commander::queueCmdRun(Commander * const me) {
                 me->reQ->dispatch(&e);
                 /* update current executable request id */
                 me->curEReqId = me->pReqElem->id;
-                qDebug("[Commander(queueCmdRun) "
-                    "Req update current  ReqId(%d)]",
-                        me->curEReqId);
                 CmdQueue_updateCurReq(me->curWorkQnode, me->curEReqId);
                 /* current request run done */
                 if (me->pReqElem->status == REQ_SUCCESS) {

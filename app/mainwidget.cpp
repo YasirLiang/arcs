@@ -1080,7 +1080,7 @@ void MainSurface::updateSystem(void) {
                 setResult("Result:");
                 /* set status to Excuting */
                 setStatus("Status: Excuting");
-                pSysUpatePro->setRange(0, totalBytes);  
+                pSysUpatePro->setRange(0, totalBytes);
                 pSysUpatePro->setModal(true);
                 /* lock ui until last request being finished */
                 lockUi();
