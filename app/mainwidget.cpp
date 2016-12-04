@@ -102,8 +102,8 @@ MainSurface::MainSurface(QWidget *parent)
     pSysUpatePro->setWindowTitle(tr("UpLoad Process"));
     pSysUpatePro->setLabelText(tr("Transfering...")); 
     pSysUpatePro->setCancelButtonText(tr("cancel"));
-    pSysUpatePro->setModal(false);
-    pSysUpatePro->hide();
+    pSysUpatePro->reset(); /* hide dialog */
+    cancelUpdate = (bool)0;
     /* set result to NULL */
     setResult("Result:");
     /* set status to Ready */
@@ -162,7 +162,7 @@ MainSurface::MainSurface(QWidget *parent)
         this, SLOT(stopSystem()));
      connect(updateSysPushBtn, SIGNAL(clicked()),
         this, SLOT(updateSystem()));
-     /* tap to process cancel event */
+     /* tap cancel button to process cancel event */
      connect(pSysUpatePro, SIGNAL(canceled()),
         this, SLOT(cancelProcessBars()));
 }
@@ -253,6 +253,11 @@ uint64_t MainSurface::loadUpdateData(uint8_t * const buf,
 void MainSurface::updateBarProccess(void) {
 /* invoked only when request called success */ 
     pSysUpatePro->setValue(totalBytes - bytesToWrite);
+}
+/*updateBarProccess().......................................................*/
+bool MainSurface::isUpdateCancel(void) {
+/* get cancel flag to true */ 
+    return cancelUpdate;
 }
 /*add().....................................................................*/
 void MainSurface::add(void) {
@@ -1082,6 +1087,7 @@ void MainSurface::updateSystem(void) {
                 setStatus("Status: Excuting");
                 pSysUpatePro->setRange(0, totalBytes);
                 pSysUpatePro->setModal(true);
+                cancelUpdate = (bool)0;
                 /* lock ui until last request being finished */
                 lockUi();
             }
@@ -1109,5 +1115,6 @@ void MainSurface::cancelProcessBars(void) {
         free(pBytesToWriteBuf);
         pBytesToWriteBuf = (uint8_t *)0;
     }
+    cancelUpdate = (bool)1;
 }
 

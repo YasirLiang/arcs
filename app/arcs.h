@@ -52,7 +52,6 @@ typedef enum ArcsSignal {
     REQUEST_ELEM_SIG, /*! request element signal */
     COMMAND_SIG, /*! command signal */
     REQUEST_DONE_SIG, /*! Request node signal */
-    PORT_CHANGE_SIG, /*! Qt port change  */
     MAX_SIG /*! Always at the end */
 }ArcsSignal;
 
@@ -159,27 +158,6 @@ public:
     {
         memset(buf, 0, PORT_BUF_SIZE); /* reset memery */
         if ((datalen <= PORT_BUF_SIZE)
-            && (p != (uint8_t *)0))
-        {
-            memcpy(buf, p, datalen); /* copy data */
-        }
-    }
-};
-/*! class Transmit event */
-class PortChangeEvt : public QP::QEvt {
-public:
-    TExternPort port;
-    uint16_t datalen;
-    uint8_t buf[64];
-    PortChangeEvt(TExternPort po,
-        uint16_t len,
-        uint8_t *p)
-      : QEvt(PORT_CHANGE_SIG),
-        port(po),
-        datalen(len)
-    {
-        memset(buf, 0, 64); /* reset memery */
-        if ((datalen <= 64)
             && (p != (uint8_t *)0))
         {
             memcpy(buf, p, datalen); /* copy data */

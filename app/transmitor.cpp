@@ -197,40 +197,6 @@ QP::QState Transmitor::serving(Transmitor * const me,
             status_ = QM_HANDLED();
             break;
         }
-        case PORT_CHANGE_SIG: {
-            PortChangeEvt const * const pCe =
-                static_cast<PortChangeEvt const * const>(e);
-            switch (pCe->port) {
-                case QT_PORT: {
-                    if (pCe->buf[0] == 0) {/* Tcp */
-                        uint16_t *port_ = (uint16_t*)&pCe->buf[1];
-                        char ip[32] = {0};
-                        uint8_t ip_[4] = {0};
-                        for (int i = 0; i < 4; ++i) {
-                            ip_[i] = pCe->buf[i+3];
-                            itoa(ip_[i], (char*)&ip[i*4], 10);
-                            if (i < 3) {/* three point */
-                                ip[(i + 1) * 4 - 1] = '.';
-                            }
-                        }
-                        qDebug("chang port-ip:%d, %s\n", *port_, ip);
-                        QtPortTcpSocket_setTcpSocket(ip, *port_);
-                    }
-                    else if (pCe->buf[0] == 1) {
-                        qDebug("Not surport serial port now\n");
-                    }
-                    else {
-                        /* Error port */
-                    }
-                    break;
-                }
-                default: {/* no exit port */
-                    break;
-                }
-            }
-            status_ = QM_HANDLED();
-            break;
-        }
         default: {
             status_ = QM_SUPER();
             break;

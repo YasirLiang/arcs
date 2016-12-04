@@ -29,8 +29,9 @@ class SystemSetDialog : public QDialog, public Ui_SysSetDialog {
     Q_OBJECT
 public:
     uint8_t serialPort;
+    QString passWord;
     static QString tcpIp;
-    static int32_t tcpPort;
+    static QString tcpPort;
     static QTcpSocket tcpClient;
     static uint8_t *datagram;
     static uint8_t avail;
@@ -40,18 +41,22 @@ public:
     void closeEvent(QCloseEvent *event);
     void setTcpSocket(char const * const pip,
         int _port);
+    void setTcpSocket(void);
     static SystemSetDialog *instance(void);
     static void init_s(void);
     static int send_s(void const * const, int);
     static int recv_s(void * const, int);
     static int destroy_s(void);
 private slots:
-    void changePass(void);
     void changePort(void);
+    void changePass(void);
     void clientConnected(void);
     void clientDisConnected(void);
     void qtPortReady(void);
     void displayError(QAbstractSocket::SocketError socketErr);
+    void tcpPortLineEditChange(const QString &txt);
+    void tcpIpLineEditChange(const QString &txt);
+    void passLineEditChange(const QString &txt);
 } ;
 
 #endif /* __SYSTEMSET_H__ */

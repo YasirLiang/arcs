@@ -26,6 +26,7 @@
 /*local variable of current command-----------------------------------------*/
 static uint32_t l_curCmd;
 static uint16_t l_seqNum;
+/* define user buffer size of qt */
 #define QT_USER_BUF_SIZE 512
 /*$ qt mainsurface query id command function................................*/
 void* QtCmd_queryId(struct TCmdQElem *pElem) {
@@ -232,43 +233,6 @@ void* QtCmd_optTerminal(struct TCmdQElem *pElem) {
         /* unlock ui */
         MainSurface::instance()->unLockUi();
     }
-    /* not generate request local default*/
-    return (void *)0;
-}
-/*$ */
-void* QtCmd_setLocalSys(struct TCmdQElem *pElem) {
-    uint32_t cmd;
-    uint16_t bufLen;
-    /* assert 'NULL' pointer error */
-    Q_ASSERT(pElem != (struct TCmdQElem *)0);
-    cmd = pElem->id;
-    if (l_curCmd != cmd) {/* first run this command */
-        l_curCmd = cmd;
-        if ((pElem->cmdBuf[0] & 0x01) == 0) { /* for local */
-            if ((pElem->cmdBuf[0] & 0x7f) == 3) {/* change pwd */
-                /* change password, this is not finished(20161121)*/
-            }
-            else if ((pElem->cmdBuf[0] & 0x7f) == 4) {/* change port */
-                bufLen = pElem->cmdBuf[1];
-                ARCS::A0_Transmitor->POST(Q_NEW(ARCS::PortChangeEvt,
-                ARCS::QT_PORT, bufLen, pElem->cmdBuf + 2), (void*)0);
-            }
-            else {
-                /* no need */
-            }
-            pElem->execStatus = EXEC_SUCCESS;
-        }
-        else {
-            pElem->execStatus = EXEC_SUCCESS;
-        }
-    }
-    else {
-        pElem->execStatus = EXEC_SUCCESS;
-    }
-    /* set status to Finish */
-    MainSurface::instance()->setStatus(LBSTATUS_FINISH);
-    /* set result to success */
-    MainSurface::instance()->setResult(LBRESULT_SCS);
     /* not generate request local default*/
     return (void *)0;
 }
@@ -505,12 +469,39 @@ void* QtCmd_setTerminalSys(struct TCmdQElem *pElem) {
                                          running successfully */
                                     pElem->execStatus = EXEC_SUCCESS;
                                     pS = LBSTATUS_FINISH;
-                                    pR = LBRESULT_FAILED;
+                                    if (MainSurface::instance()->\
+                                        isUpdateCancel())
+                                    {
+                                        pR = LBRESULT_FAILED;
+                                    }
+                                    else {
+                                        pR = LBRESULT_SCS;
+                                    }
                                     pRet = (void *)0;
                                     MainSurface::instance()->unLockUi();
                                 }
                             }
                             else {
+                                /*debug error code */
+                                TPRStatusNode sts = (TPRStatusNode)0;
+                                list_for_each_entry(sts,
+                                    &pReq->in->statusList, list)
+                                {
+                                    if (sts->hType == INFLIGHT_HD) {
+                                        TRequestState *pstElmt =
+                                            (TRequestState *)0;
+                                        pstElmt =
+                                            (TRequestState *)(sts->statusElem);
+                                        if (pstElmt != (TRequestState*)0) {
+                                            if (pstElmt->reStatus
+                                                != ARCS::QSUCCESS)
+                                            {
+                                                qDebug(">: reStatus = %d-<",
+                                                    pstElmt->reStatus);
+                                            }
+                                        }
+                                    }
+                                }
                                 l_fset = (bool)1;
                                 /* set system set command 
                                     running successfully */
@@ -817,7 +808,7 @@ int QtReq_updateSystem(struct TRequestElem *pElem) {
         cmd = pElem->cmdId;
         pi = Inflight_nodeCreate(buf.seq, cmd,
             (uint16_t)flLen, reqId, ARCS::NOTIFY_FLAG,
-            (uint32_t)100, (uint32_t)3, qtBuf);
+            (uint32_t)100, (uint32_t)6, qtBuf);
         if (pi != (TInflightCmd_pNode)0) {
             Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
             ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,

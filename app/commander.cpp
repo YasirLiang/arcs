@@ -191,10 +191,14 @@ QP::QState Commander::active(Commander * const me,
                              function will get next command and run it until all
                              command run completly or current command waiting
                              for running */
+                        qDebug("[Command(active) Finish id = %d, req = %d]",
+                            me->curWorkQnode->elem.id, me->curEReqId);
                         me->queueCmdRun(me);
                         if (me->qCmdExeStatus == CQE_SUCCESS) {
                             /* all command request run success */
                             /* change state machine to idle */
+                            qDebug("Command(active) all Commander Finish"
+                                    "To Idle state");
                             status_ = QM_TRAN(&tatbl_);
                         }
                         else {
@@ -215,10 +219,14 @@ QP::QState Commander::active(Commander * const me,
                      function will get next command and run it until all
                      command run completly or current command waiting
                      for running */
+                qDebug("[1.Command(active) Finish id = %d, req = %d]",
+                            me->curWorkQnode->elem.id, me->curEReqId);
                 me->queueCmdRun(me);
                 if (me->qCmdExeStatus == CQE_SUCCESS) {
                     /* all command run success */
                     /* change state machine to idle */
+                    qDebug("1.Command(active) all Commander Finish,"
+                                "To Idle state");
                     status_ = QM_TRAN(&tatbl_);
                 }
                 else {

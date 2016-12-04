@@ -165,13 +165,7 @@ QP::QState Controller::serving(Controller * const me,
                         break;
                     }
                     case SET_SYS: {
-                        if (!(e_->buf[0] & 0x01)) {
-                            /* local system set */
-                            pSpeFunc = &QtCmd_setLocalSys;
-                        }
-                        else {
-                            pSpeFunc = &QtCmd_setTerminalSys;
-                        }
+                        pSpeFunc = &QtCmd_setTerminalSys;
                         break;
                     }
                     case CAMERA_CONTROL: {
@@ -386,6 +380,8 @@ void Controller::handleServerCmd(uint8_t const * const rxBuf,
             memcpy(cmd->elem.cmdBuf, rxBuf, rxLen);
             /* set specific function */
             cmd->elem.run = cmdFun;
+            qDebug("Qt Protocal(cmd = %d) will dispath to commander",
+                buf->cmd);
             CommandEvt e(cmd);
             commander->dispatch(&e);
         }

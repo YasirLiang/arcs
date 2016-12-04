@@ -36,6 +36,7 @@ public:
     uint8_t *pBytesToWriteBuf;
     uint64_t totalBytes;
     uint64_t bytesToWrite;
+    bool cancelUpdate;
     
     MainSurface(QWidget * parent = 0);
     ~MainSurface(void);
@@ -45,7 +46,8 @@ public:
     void setStatus(char const * const status_);
     void setResult(char const * const result_);
     uint64_t loadUpdateData(uint8_t * const buf, uint64_t reqSize);
-    void updateBarProccess(void); 
+    void updateBarProccess(void);
+    bool isUpdateCancel(void);
 private:
     bool uiLocked; /*it's setted to one until user's request is finished. */
     uint32_t requstId;

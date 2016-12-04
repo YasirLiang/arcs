@@ -28,7 +28,7 @@ ARCS::PortEvt SystemSetDialog::qtCltRdEvt(ARCS::PORTREADABLE_SIG,
     ARCS::QT_PORT,
     ARCS::READABLE);
 QString SystemSetDialog::tcpIp("192.168.0.154");
-int32_t SystemSetDialog::tcpPort = 5002;
+QString SystemSetDialog::tcpPort = "5002";
 QTcpSocket SystemSetDialog::tcpClient;
 uint8_t *SystemSetDialog::datagram;
 uint8_t SystemSetDialog::avail;
@@ -60,8 +60,16 @@ SystemSetDialog::SystemSetDialog(QWidget * parent)
     vTable.send = &send_s;
     vTable.recv = &recv_s;
     vTable.destroy = &destroy_s;
-
+    
     avail = 0;
+    /* set ip */
+    tcpPortLineEdit->setText(tcpPort);
+    ipLineEdit->setText(tcpIp);
+    serialPortComboBox->setEnabled(0);
+    connect(changePortPushBtn, SIGNAL(clicked()),
+        this, SLOT(changePort()));
+    connect(changePassPushBtn, SIGNAL(clicked()),
+        this, SLOT(changePass()));
     connect(&tcpClient, SIGNAL(connected()),
         this, SLOT(clientConnected()));
     connect(&tcpClient, SIGNAL(disconnected()),
@@ -70,6 +78,12 @@ SystemSetDialog::SystemSetDialog(QWidget * parent)
         this, SLOT(qtPortReady()));
     connect(&tcpClient, SIGNAL(error(QAbstractSocket::SocketError)),
         this, SLOT(displayError(QAbstractSocket::SocketError)));
+    connect(tcpPortLineEdit, SIGNAL(textChanged(const QString &)),
+        this, SLOT(tcpPortLineEditChange(const QString &)));
+    connect(ipLineEdit, SIGNAL(textChanged(const QString &)),
+        this, SLOT(tcpIpLineEditChange(const QString &)));
+        connect(passLineEdit, SIGNAL(textChanged(const QString &)),
+        this, SLOT(passLineEditChange(const QString &)));
 }
 /*closeEvent()..............................................................*/
 void SystemSetDialog::closeEvent(QCloseEvent *event) {
@@ -91,22 +105,55 @@ void SystemSetDialog::displayError(QAbstractSocket::SocketError socketErr) {
 }
 /*$ SystemSetDialog::clientConnected()......................................*/
 void SystemSetDialog::clientConnected(void) {
+    char *pIp;
+    QByteArray bAy;
+    QString info;
+    bool ok;
+    int32_t uport;
+    
     avail = 1;
-    /* can set connect server successful */
-    qDebug("Connect to Server success( %s-%d )\n",
-        (char *)&tcpIp, tcpPort);
+    bAy = tcpIp.toLatin1(); 
+    pIp = bAy.data();
+    if (!tcpPort.isEmpty()) {
+        uport = (int32_t)tcpPort.toInt(&ok, 10);
+        info.clear();
+        info.sprintf("connect to (%s-%d) successfully",
+                    pIp, uport);
+        /* can set connect server successful */
+        qDebug("Connect to Server success(%s-%d)\n",
+            pIp, uport);
+        QMessageBox::information(this, "Socket Success",
+                info, QMessageBox::Ok,
+                0, 0);
+    }
 }
 /*$ SystemSetDialog::clientDisConnected()...................................*/
 void SystemSetDialog::clientDisConnected(void) {
+    char *pIp;
+    QByteArray bAy;
+    QString info;
+    bool ok;
+    int32_t uport;
+    
     avail = 0;
-    /* can set disconnect server successful */
-    qDebug("Client DisConnect From Server( %s-%d )\n",
-        (char *)&tcpIp, tcpPort);
+    bAy = tcpIp.toLatin1(); 
+    pIp = bAy.data();
+    if (!tcpPort.isEmpty()) {
+        uport = (int32_t)tcpPort.toInt(&ok, 10);
+        info.clear();
+        info.sprintf("DisConnect From Server(%s-%d) Success",
+                    pIp, uport);
+        /* can set disconnect server successful */
+        qDebug("DisConnect From Server(%s-%d) Success\n",
+                pIp, uport);
+        QMessageBox::information(this, "Socket Success",
+                info, QMessageBox::Ok,
+                0, 0);
+    }
 }
 /*$ SystemSetDialog::qtPortReady()..........................................*/
 void SystemSetDialog::qtPortReady(void) {
     if (avail) {
-        qDebug("qtPortReady()\n");
         /* publish port readable signal */
         ARCS::A0_Transmitor->POST(&qtCltRdEvt, (void*)0);
     }
@@ -115,17 +162,56 @@ void SystemSetDialog::qtPortReady(void) {
 void SystemSetDialog::setTcpSocket(char const * const pip,
     int _port)
 {
+    char *pIp;
+    bool ok;
+    int32_t uport;
+    QByteArray bAy;
+    QString s;
+    
     tcpIp.clear();
     tcpIp.sprintf("%s", pip);
-    tcpPort = _port;
+    s = QString::number(_port, 10);
+    tcpPort = s;
+    bAy = tcpIp.toLatin1(); 
+    pIp = bAy.data();
+    if (!tcpPort.isEmpty()) {
+        uport = (int32_t)tcpPort.toInt(&ok, 10);
+        qDebug("tcpPort(%d) changed \n", uport);
+    }
+    /* will connect to server */
+    qDebug("will connect to server[%s-%d]",
+        pIp, uport);
+    tcpClient.connectToHost(tcpIp, uport);
     avail = 0;
     datagram = (uint8_t *)0;
-    tcpClient.connectToHost(tcpIp, tcpPort);
+}
+/*$ SystemSetDialog::setTcpSocket().........................................*/
+void SystemSetDialog::setTcpSocket(void)
+{
+    char *pIp;
+    bool ok;
+    int32_t uport;
+    QByteArray bAy = tcpIp.toLatin1(); 
+    pIp = bAy.data();
+    if (!tcpPort.isEmpty()) {
+        uport = (int32_t)tcpPort.toInt(&ok, 10);
+        qDebug("tcpPort(%d) changed \n", uport);
+    }
+    /* will connect to server */
+    qDebug("will connect to server[%s-%d](none parameter )",
+        pIp, uport);
+    tcpClient.connectToHost(tcpIp, uport);
+    avail = 0;
+    datagram = (uint8_t *)0;
 }
 /*$ specific Extern port init function......................................*/
 void SystemSetDialog::init_s(void) {
-    tcpClient.connectToHost(tcpIp,
-        tcpPort);
+    bool ok;
+    int32_t iport;
+    if (!tcpPort.isEmpty()) {
+        iport = (int32_t)tcpPort.toInt(&ok, 10);
+        tcpClient.connectToHost(tcpIp, iport);
+    }
 }
 /*$ specific Extern port send function......................................*/
 int SystemSetDialog::send_s(void const * const buf, int sendLen) {
@@ -174,12 +260,58 @@ int SystemSetDialog::destroy_s(void) {
     datagram = (uint8_t *)0;
     return 0;
 }
+/*$ SystemSetDialog::changePort()...........................................*/
+void SystemSetDialog::changePort(void) {
+    /* get change value */
+    QString s = portSelectComboBox->currentText();
+    if (s == "Tcp") {
+        /* set tcp port */
+        tcpClient.close();
+        setTcpSocket();
+    }
+    else if (s == "Serial"){
+        /* set Serial port */
+    }
+    else {
+        qDebug("no other port ");
+    }
+}
 /*$ SystemSetDialog::changePass()...........................................*/
 void SystemSetDialog::changePass(void) {
 
 }
-/*$ SystemSetDialog::changePort()...........................................*/
-void SystemSetDialog::changePort(void) {
-
+/*$ */
+void SystemSetDialog::tcpPortLineEditChange(const QString &txt) {
+    bool ok;
+    int32_t iport;
+    if (!txt.isEmpty()) {
+        tcpPort = txt;
+        iport = (int32_t)txt.toInt(&ok, 10);
+        qDebug("tcpPort(%d) changed \n", iport);
+    }
+}
+/*$ */
+void SystemSetDialog::tcpIpLineEditChange(const QString &txt) {
+    char *pIp;
+    QByteArray bAy;
+    
+    tcpIp.clear();
+    tcpIp = txt;    
+    bAy = txt.toLatin1();
+    pIp = bAy.data();
+    /* ip debug */
+    qDebug("ip(%s) change", pIp);
+}
+/*$ */
+void SystemSetDialog::passLineEditChange(const QString &txt) {
+    char *pass;
+    QByteArray bAy;
+    
+    passWord.clear();
+    passWord = txt;
+    bAy = passWord.toLatin1(); 
+    pass = bAy.data();
+    /* ip debug */
+    qDebug("password(%s) change", pass);
 }
 

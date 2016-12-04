@@ -26,8 +26,6 @@ void* QtCmd_switchMatrix(struct TCmdQElem *pElem);
 /*$ */
 void* QtCmd_optTerminal(struct TCmdQElem *pElem);
 /*$ */
-void* QtCmd_setLocalSys(struct TCmdQElem *pElem);
-/*$ */
 void* QtCmd_setTerminalSys(struct TCmdQElem *pElem);
 /*$ */
 void* QtCmd_cameraControl(struct TCmdQElem *pElem);

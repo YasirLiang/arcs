@@ -73,8 +73,7 @@ bool RequestList_statusAllCorrect(struct list_head *list,
             TRequestState *pstElmt = (TRequestState *)0;
             pstElmt = (TRequestState *)(sts->statusElem);
             if (pstElmt != (TRequestState*)0) {
-                if (pstElmt->reStatus != reStatus)
-                {
+                if (pstElmt->reStatus != reStatus) {
                     noOk = (bool)1;
                     break;
                 }
@@ -85,6 +84,7 @@ bool RequestList_statusAllCorrect(struct list_head *list,
                 must add corresponding code here(2016-12-1)*/
         }
     }
+    (void)hT;
     /* include empty list, if list empty, return 0*/
     return (!noOk);
 }
