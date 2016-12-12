@@ -39,7 +39,7 @@ typedef struct TRingMsgPro {
 class Transmitor : public QP::QMActive {
 private:
     /*! qt extern port recv buffer size */
-    #define QT_ET_RECV_BUF_SIZE 1024
+    #define QT_ET_RECV_BUF_SIZE 4096
     /*! port state machine */
     static QP::QMsm *port[EXTERN_PORT_NUM];
     /* recv ring buffer for all port */

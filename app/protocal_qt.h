@@ -36,7 +36,7 @@
 /*! protocal handling mask */
 #define PRO_HANDLING_MASK 0x02
 /*! protocal error mask */
-#define PRO_ERR_MASK 0x01
+#define PRO_ERR_MASK 0x1f
 /*! protocal commom lenght */
 #define PRO_COMMON_LEN 0x07
 /*! protocal data offset */
@@ -55,7 +55,9 @@
 /*! qt camera control command */
 #define QT_CMR_CTL 0x05
 /*!end of command define @} */
+
 /*!struct of qt protocal with service define */
+#pragma pack(1)
 typedef struct TProtocalQt {
     uint8_t head; /*! protocal head */
     uint8_t type;/*! protocal type */
@@ -63,7 +65,7 @@ typedef struct TProtocalQt {
     uint8_t cmd;/*! protocal command */
     uint16_t dataLen;/*! protocal data lenght */
     uint8_t dataBuf[PRO_QT_MAX];/*! protocal databuf */
-}__attribute__((packed)) TProtocalQt;
+}TProtocalQt;
 /*! struct of qt protocal with query id data */
 typedef struct TProtocalQtQueryData {
     uint16_t id;
@@ -73,14 +75,15 @@ typedef struct TProtocalQtQueryData {
     uint8_t select:1; /*! select flag */
     uint8_t grade:1; /*! grade flag */
     uint8_t online:1; /*! online flag */
-    uint8_t avbIdentity:1;
-    uint8_t :1;          /*! reserved */
+    uint8_t avbIdentity:2; /*! avb device identify */
     uint8_t permision:4; /*! permision of terminal */
     uint8_t micStatus:4; /*! micphone status */
     uint16_t cnntNum; /*! connect num */
     uint64_t id_1722; /*! 1722 id */
     uint8_t name[64]; /*! name of avb device */
-}__attribute__((packed)) TProtocalQtQueryData;
+}TProtocalQtQueryData;
+#pragma pack()
+
 /*! common terminal type */
 #define COMMON_TYPE 0
 /*! vip type terminal */
@@ -97,7 +100,32 @@ typedef struct TProtocalQtQueryData {
 #define MIC_FIRST_APPLY 2
 /*! apply status */
 #define MIC_APPLY 3
+/*$ */
+static inline int ProtocalQt_checkCrc(TProtocalQt *pIn, uint8_t rCrc) {
+    int ret = -1, i;
+    uint8_t crc = 0;
+    if ( pIn == (TProtocalQt *)0) {
+        return -1;
+    }
+    
+    crc ^= pIn->head;
+    crc ^= pIn->type;
+    crc ^= (uint8_t)(pIn->seq & 0x00ff);
+    crc ^= (uint8_t)((pIn->seq & 0xff00) >> 8);
+    crc ^= pIn->cmd;
+    crc ^= (uint8_t)(pIn->dataLen & 0x00ff);
+    crc ^= (uint8_t)((pIn->dataLen & 0xff00) >> 8);
+    for (i = 0; i < pIn->dataLen; i++) {
+        crc ^= pIn->dataBuf[i];
+    }
 
+    if (rCrc == crc) {
+        ret = 0;
+    }
+
+    return ret;
+}
+/*$ */
 static inline int ProtocalQt_readCmd(uint8_t const * const pBuf,
     int bufLen, int pos, uint8_t * const cmd)
 {    
@@ -109,7 +137,7 @@ static inline int ProtocalQt_readCmd(uint8_t const * const pBuf,
     *cmd = pBuf[pos];
     return 0;
 }
-
+/*$ */
 static inline int ProtocalQt_Fill(TProtocalQt *pIn,
     int inLen, uint8_t *pBuf, int bufLen)
 {

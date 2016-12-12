@@ -99,7 +99,7 @@ private slots:
     void verticalSpeedDoTxtChange(const QString &);
     void cmrCtlTypeComboBoxValChanged(void);
     void curcameraComboBoxValChanged(void);
-    void optTypeComboBoxValChanged(void);
+    void optTypeComboBoxValChanged(int);
     void optComboBoxValChanged(void);
     void inputComboBoxValChanged(void);
     void outputComboBoxValChanged(void);
@@ -108,6 +108,8 @@ private slots:
     void stopSystem(void);
     void updateSystem(void);
     void cancelProcessBars(void);
+    void optComboBoxCurValChanged(const QString &);
+    void idComboBoxCurValChanged(const QString &);
 };
 
 #endif /* __MAIN_WIDGET_H__ */

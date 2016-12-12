@@ -19,6 +19,7 @@
 /*Incluing file-------------------------------------------------------------*/
 #include <QtWidgets>
 #include <fstream>
+#include <QTextCodec> 
 #include "user.h"
 #include "systemset.h"
 #include "mainwidget.h"
@@ -111,6 +112,17 @@ MainSurface::MainSurface(QWidget *parent)
     pBytesToWriteBuf = (uint8_t *)0;
     totalBytes = 0;
     bytesToWrite = 0;
+    /* no change set */
+    qresultTableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    /* select whole row */
+    qresultTableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+    /* sort column table when clicked head table */
+    QHeaderView *headerGoods = qresultTableWidget->horizontalHeader();
+    headerGoods->setSortIndicator(0, Qt::AscendingOrder);
+    headerGoods->setSortIndicatorShown(true);
+    connect(headerGoods, SIGNAL(sectionClicked(int)),
+        qresultTableWidget, SLOT(sortByColumn(int)));
+    
     connect(zoomPushBtn, SIGNAL(clicked()), this, SLOT(add()));
     connect(beginPushBtn, SIGNAL(clicked()), this, SLOT(begin()));
     connect(curcameraSwPushBtn, SIGNAL(clicked()),
@@ -145,17 +157,19 @@ MainSurface::MainSurface(QWidget *parent)
     connect(curcameraComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(curcameraComboBoxValChanged()));
      connect(optTypeComboBox, SIGNAL(currentIndexChanged(int)),
-        this, SLOT(optTypeComboBoxValChanged()));
+        this, SLOT(optTypeComboBoxValChanged(int)));
      connect(optComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(optComboBoxValChanged()));
-     connect(optComboBox, SIGNAL(currentIndexChanged(int)),
-        this, SLOT(inputComboBoxValChanged()));
+     connect(optComboBox, SIGNAL(currentTextChanged(const QString &)),
+        this, SLOT(optComboBoxCurValChanged(const QString &)));
      connect(inputComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(inputComboBoxValChanged()));
      connect(outputComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(outputComboBoxValChanged()));
      connect(idComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(idComboBoxValChanged()));
+     connect(idComboBox, SIGNAL(currentTextChanged(const QString &)),
+        this, SLOT(idComboBoxCurValChanged(const QString &)));
      connect(beginSysPushBtn, SIGNAL(clicked()),
         this, SLOT(beginSystem()));
      connect(stopSysPushBtn, SIGNAL(clicked()),
@@ -610,7 +624,10 @@ void MainSurface::query(void) {
         /* set status to Excuting */
         setStatus("Status: Excuting");        
         /* clear table widget */
-        qresultTableWidget->clear();
+        int row = qresultTableWidget->rowCount();
+        for (int i = 0; i < row; i++) {
+            qresultTableWidget->removeRow(0);
+        }
         /* lock ui until last request being finished */
         lockUi();
     }
@@ -890,7 +907,7 @@ void MainSurface::curcameraComboBoxValChanged(void) {
     qDebug(" curCamera = %d\n", curCamera);
 }
 /*$ */
-void MainSurface::optTypeComboBoxValChanged(void) {
+void MainSurface::optTypeComboBoxValChanged(int) {
     int index;
     index = optTypeComboBox->currentIndex();
     if (index == 0) {/* operetion to speak */
@@ -929,7 +946,21 @@ void MainSurface::optComboBoxValChanged(void) {
     else {   
         curAddr = (uint16_t)s.toInt(&ok, 10);
     }
-    qDebug(" curCamera = %d\n", curAddr);
+    qDebug(" curAddr = %d\n", curAddr);
+}
+/*$ */
+void MainSurface::optComboBoxCurValChanged(const QString &txt) {
+    bool ok;
+    if (!txt.isEmpty()) {
+        if (txt == "all") {
+            curAddr = 0xffff;
+        }
+        else {   
+            curAddr = (uint16_t)txt.toInt(&ok, 10);
+        }
+    }
+    /* get change value */
+    qDebug(" curAddr = %d\n", curAddr);
 }
 /*$ */
 void MainSurface::inputComboBoxValChanged(void) {
@@ -962,6 +993,20 @@ void MainSurface::idComboBoxValChanged(void) {
         curId = (uint16_t)s.toInt(&ok, 10);
     }
     qDebug(" curId  = %d\n", curId );
+}
+/*$ */
+void MainSurface::idComboBoxCurValChanged(const QString &txt) {
+    bool ok;
+    if (!txt.isEmpty()) {
+        if (txt == "all") {
+            curId = 0xffff;
+        }
+        else {   
+            curId = (uint16_t)txt.toInt(&ok, 10);
+        }
+    }
+    /* get change value */
+    qDebug(" curId = %d\n", curId);
 }
 /*$ */
 void MainSurface::beginSystem(void) {

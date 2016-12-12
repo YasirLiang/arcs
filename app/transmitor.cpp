@@ -286,15 +286,7 @@ void Transmitor::qtCharMsgPro(void) {
                 dataLen++;
             }
             else if (dataLen == l_msgPro.dataLen) {
-                uint8_t crc = 0;
-                uint8_t const *p = (uint8_t *)&l_msgPro;
-                for (int i = 0; i < (int)pRingPro->msgLen; ++i) {
-                    crc ^= *(p++);
-                }
-                /* set p to not useful */
-                p = (uint8_t const *)0;
-                /* check crc correct */
-                if (crc == ch) {
+                if (ProtocalQt_checkCrc(&l_msgPro, ch) == 0) {
                     pRingPro->recvOver = (bool)1;
                     userTimerStart(2, &pRingPro->smTimer);
                 }

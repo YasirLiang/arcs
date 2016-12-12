@@ -225,8 +225,6 @@ QP::QState Commander::active(Commander * const me,
                 if (me->qCmdExeStatus == CQE_SUCCESS) {
                     /* all command run success */
                     /* change state machine to idle */
-                    qDebug("1.Command(active) all Commander Finish,"
-                                "To Idle state");
                     status_ = QM_TRAN(&tatbl_);
                 }
                 else {
@@ -348,7 +346,7 @@ QP::QState Commander::idle(Commander * const me,
             else if (me->curWorkQnode->elem.execStatus == EXEC_SUCCESS) {
             /* current command be finished, user make decision to
                 execute success!*/
-                qDebug("[Command Finish %d, %d]",
+                qDebug("[Command(idle) Finish %d, %d]",
                     me->curWorkQnode->elem.id, me->curEReqId);
                 list_ = &me->curWorkQnode->elem.requestHead;
                 RequestList_destroy(list_);

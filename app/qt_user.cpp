@@ -23,6 +23,7 @@
 #include "inflight.h"
 #include "qt_user.h"
 #include "mainwidget.h"
+#include <QTextCodec> 
 /*local variable of current command-----------------------------------------*/
 static uint32_t l_curCmd;
 static uint16_t l_seqNum;
@@ -56,7 +57,7 @@ void* QtCmd_queryId(struct TCmdQElem *pElem) {
             reqId = ARCS::Controller_getNextReqId();
             pi = Inflight_nodeCreate(buf.seq, cmd,
                 flLen, reqId, ARCS::NOTIFY_FLAG,
-                (uint32_t)100, (uint32_t)3, qtBuf);
+                (uint32_t)500, (uint32_t)3, qtBuf);
             if (pi != (TInflightCmd_pNode)0) {
                 Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
                 ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
@@ -128,7 +129,7 @@ void* QtCmd_switchMatrix(struct TCmdQElem *pElem) {
             reqId = ARCS::Controller_getNextReqId();
             pi = Inflight_nodeCreate(buf.seq, cmd,
                 (uint16_t)flLen, reqId, ARCS::NOTIFY_FLAG,
-                (uint32_t)100, (uint32_t)3, qtBuf);
+                (uint32_t)500, (uint32_t)3, qtBuf);
             if (pi != (TInflightCmd_pNode)0) {
                 Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
                 ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
@@ -196,7 +197,7 @@ void* QtCmd_optTerminal(struct TCmdQElem *pElem) {
             reqId = ARCS::Controller_getNextReqId();
             pi = Inflight_nodeCreate(buf.seq, cmd,
                 (uint16_t)flLen, reqId, ARCS::NOTIFY_FLAG,
-                (uint32_t)100, (uint32_t)3, qtBuf);
+                (uint32_t)500, (uint32_t)3, qtBuf);
             if (pi != (TInflightCmd_pNode)0) {
                 Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
                 ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
@@ -265,7 +266,7 @@ void* QtCmd_setTerminalSys(struct TCmdQElem *pElem) {
             reqId = ARCS::Controller_getNextReqId();
             pi = Inflight_nodeCreate(buf.seq, cmd,
                 (uint16_t)flLen, reqId, ARCS::NOTIFY_FLAG,
-                (uint32_t)100, (uint32_t)3, qtBuf);
+                (uint32_t)500, (uint32_t)3, qtBuf);
             if (pi != (TInflightCmd_pNode)0) {
                 Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
                 ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
@@ -293,8 +294,8 @@ void* QtCmd_setTerminalSys(struct TCmdQElem *pElem) {
         }
     }
     else {
-        char const *pS;
-        char const *pR;
+        char const *pS = LBSTATUS;
+        char const *pR = LBRESULT;
         uint8_t sysCmd = pElem->cmdBuf[0];
         sysCmd &= 0xfe; /* high 7 bit*/
         sysCmd >>= 1;
@@ -556,7 +557,7 @@ void* QtCmd_cameraControl(struct TCmdQElem *pElem) {
             reqId = ARCS::Controller_getNextReqId();
             pi = Inflight_nodeCreate(buf.seq, cmd,
                 (uint16_t)flLen, reqId, ARCS::NOTIFY_FLAG,
-                (uint32_t)100, (uint32_t)3, qtBuf);
+                (uint32_t)500, (uint32_t)3, qtBuf);
             if (pi != (TInflightCmd_pNode)0) {
                 Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
                 ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
@@ -605,10 +606,13 @@ void* ServerCmd_queryId(struct TCmdQElem *pElem) {
     int row, i, tnum;
     uint16_t dataLen, pos;
     uint16_t bufLen;
+    int flLen;
+    int qAddr = -1, countCnnt = 0;
+    uint8_t qtBuf[QT_USER_BUF_SIZE];
     TProtocalQtQueryData *data;
-    QString cnntStr, cnntCountStr, permisionStr;
+    QString cnntStr, permisionStr;
     QString voteStr, signStr, avbStr;
-    QString micStr, rgstStr, idStr;
+    QString micStr, rgstStr;
     QString nameStr, selStr, gradeStr;
     QTableWidgetItem *idItem, *avbItem, *cnntItem,
         *cnntCountItem, *perItem, *micItem, *rgstItem,
@@ -617,22 +621,25 @@ void* ServerCmd_queryId(struct TCmdQElem *pElem) {
     QTableWidget *tableWidget;
     /* first run this command? */
     cmd = pElem->id;
+    pBuf = (TProtocalQt *)pElem->cmdBuf;
     if (l_curCmd != cmd) {
         /* set current running command */
         l_curCmd = cmd;
-        pBuf = (TProtocalQt *)pElem->cmdBuf;
         /* response for server request */
         if (!(pBuf->type & PRO_RESP_MASK)) {
             memset(&buf, 0, sizeof(TProtocalQt));
             buf.head = PROTOCAL_QT_TYPE;
-            buf.type = (0x00 & PRO_RESP_MASK);
+            buf.type = (0x00 | PRO_RESP_MASK);
+            qDebug("query id seq response = %d", pBuf->seq);
             buf.seq = pBuf->seq;
             buf.cmd = QT_QUEUE_ID;
             buf.dataLen = 0;
-            memcpy(buf.dataBuf, pElem->cmdBuf, buf.dataLen);
             bufLen = buf.dataLen + PRO_COMMON_LEN;
-            ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
-                ARCS::QT_PORT, bufLen, (uint8_t *)&buf), (void*)0);
+            flLen = ProtocalQt_Fill(&buf, bufLen, qtBuf, QT_USER_BUF_SIZE);
+            if (flLen != -1) {
+                ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,
+                    ARCS::QT_PORT, flLen, qtBuf), (void*)0);
+            }
         }
         /* parser data */
         if (pBuf->type & PRO_REPORT_TYPE) {
@@ -642,12 +649,12 @@ void* ServerCmd_queryId(struct TCmdQElem *pElem) {
                 tableWidget = MainSurface::instance()->qresultTableWidget;
                 tnum = (int)(dataLen / sizeof(TProtocalQtQueryData));
                 for (i = 0; i < tnum; i++) {
-                    pos = tnum*sizeof(TProtocalQtQueryData);
+                    pos = i*sizeof(TProtocalQtQueryData);
                     /* must not out of range */
                     Q_ASSERT(pos <= (PRO_QT_MAX - 78));
                     data = (TProtocalQtQueryData *)\
                         &pBuf->dataBuf[pos];
-                    
+                    QString tempStr;
                     avbStr.sprintf("0x%016llx", data->id_1722);
                     nameStr.sprintf("%s", data->name);
                     if (data->online) {
@@ -656,62 +663,84 @@ void* ServerCmd_queryId(struct TCmdQElem *pElem) {
                     else {
                         cnntStr.sprintf("%s", "D"); /* offline */
                     }
-                    cnntCountStr.sprintf("%d", data->cnntNum);
-                    row = tableWidget->rowCount();        /* insert new row */
-                    tableWidget->insertRow(row);
-                    if (data->avbIdentity) {/* host unit */
-                        idStr.sprintf("%s", "无");
-                        permisionStr.sprintf("%s", "host unit");
+                    countCnnt = data->cnntNum;
+                    if ((data->avbIdentity == 1)
+                         || (data->avbIdentity == 2))
+                    {/* host unit */
+                        qAddr = -1;
+                        if (data->avbIdentity == 1) {
+                            permisionStr.sprintf("%s", "Muticastor");
+                        }
+                        else {
+                            permisionStr.sprintf("%s", "Common host unit");
+                        }
+                        
+                        micStr.sprintf("%s", " ");
+                        rgstStr.sprintf("%s", " ");
+                        signStr.sprintf("%s", " ");
+                        voteStr.sprintf("%s", " ");
+                        selStr.sprintf("%s", " ");
+                        gradeStr.sprintf("%s", " ");
+
+                        micItem = new QTableWidgetItem(micStr);
+                        rgstItem = new QTableWidgetItem(rgstStr);
+                        signItem = new QTableWidgetItem(signStr);
+                        voteItem = new QTableWidgetItem(voteStr);
+                        selItem = new QTableWidgetItem(selStr);
+                        gradeItem = new QTableWidgetItem(gradeStr);
                     }
-                    else {
-                        idStr.sprintf("%d", data->id);
+                    else if (data->avbIdentity == 3) {
+                        qAddr = data->id;
+                        if (qAddr == 0xffff) {
+                                qAddr = -1;
+                        }
                         permisionStr.sprintf("%d", data->permision);
                         if (data->micStatus == MIC_CLOSE) {
-                            micStr.sprintf("%s", "关闭");
+                            micStr.sprintf("%s", "Close");
                         }
                         else if (data->micStatus == MIC_OPEN) {
-                            micStr.sprintf("%s", "打开");
+                            micStr.sprintf("%s", "\u2713");
                         }
                         else if (data->micStatus == MIC_FIRST_APPLY) {
-                            micStr.sprintf("%s", "首位申请");
+                            micStr.sprintf("%s", "First Apply");
                         }
                         else if (data->micStatus == MIC_APPLY) {
-                            micStr.sprintf("%s", "其他申请");
+                            micStr.sprintf("%s", "Other Apply");
                         }
                         else {
                             micStr.sprintf("%s", "wrong status");
                         }
 
                         if (data->rgst) {
-                            rgstStr.sprintf("%s", "已报到");
+                            rgstStr.sprintf("%s", "\u2713");
                         }
                         else {
-                            rgstStr.sprintf("%s", "未报到");
+                            rgstStr.sprintf("%s", "unregister");
                         }
 
-                        if (data->sign) {
-                            signStr.sprintf("%s", "已签到");
+                        if (data->sign) {                            
+                            signStr.sprintf("%s", "\u2713");
                         }
                         else {
-                            signStr.sprintf("%s", "未签到");
+                            signStr.sprintf("%s", "unsigned");
                         }
                         if (data->vote) {
-                            voteStr.sprintf("%s", "已表决");
+                            voteStr.sprintf("%s", "\u2713");
                         }
                         else {
-                            voteStr.sprintf("%s", "未表决");
+                            voteStr.sprintf("%s", "unvote");
                         }
                         if (data->select) {
-                            selStr.sprintf("%s", "已投票");
+                            selStr.sprintf("%s", "\u2713");
                         }
                         else {
-                            selStr.sprintf("%s", "未投票");
+                            selStr.sprintf("%s", "unselect");
                         }
                         if (data->grade) {
-                            gradeStr.sprintf("%s", "已评分");
+                            gradeStr.sprintf("%s", "\u2713");
                         }
                         else {
-                            gradeStr.sprintf("%s", "未评分");
+                            gradeStr.sprintf("%s", "ungrade");
                         }
 
                         micItem = new QTableWidgetItem(micStr);
@@ -721,12 +750,22 @@ void* ServerCmd_queryId(struct TCmdQElem *pElem) {
                         selItem = new QTableWidgetItem(selStr);
                         gradeItem = new QTableWidgetItem(gradeStr);
                     }
-
-                    idItem = new QTableWidgetItem(idStr);
+                    else {
+                        /* no other case */
+                        continue;
+                    }
+                    if (qAddr == -1) {
+                        idItem = new QTableWidgetItem("None");
+                    }
+                    else {
+                        idItem = new QTableWidgetItem();
+                        idItem->setData(Qt::DisplayRole, qAddr);
+                    }
                     avbItem = new QTableWidgetItem(avbStr);
                     nameItem = new QTableWidgetItem(nameStr);
                     cnntItem = new QTableWidgetItem(cnntStr);
-                    cnntCountItem = new QTableWidgetItem(cnntCountStr);
+                    cnntCountItem = new QTableWidgetItem();
+                    cnntCountItem->setData(Qt::DisplayRole, countCnnt);
                     perItem = new QTableWidgetItem(permisionStr);
                     row = tableWidget->rowCount();
                     tableWidget->insertRow(row);
@@ -742,6 +781,7 @@ void* ServerCmd_queryId(struct TCmdQElem *pElem) {
                     tableWidget->setItem(row, 9, voteItem);
                     tableWidget->setItem(row, 10, selItem);
                     tableWidget->setItem(row, 11, gradeItem);
+                    tableWidget->sortByColumn(0);
                 }
             }
         }
@@ -808,7 +848,7 @@ int QtReq_updateSystem(struct TRequestElem *pElem) {
         cmd = pElem->cmdId;
         pi = Inflight_nodeCreate(buf.seq, cmd,
             (uint16_t)flLen, reqId, ARCS::NOTIFY_FLAG,
-            (uint32_t)100, (uint32_t)6, qtBuf);
+            (uint32_t)500, (uint32_t)3, qtBuf);
         if (pi != (TInflightCmd_pNode)0) {
             Inflight_nodeInsertTail(pi, ARCS::Controller_getQtInflight());
             ARCS::A0_Transmitor->POST(Q_NEW(ARCS::TransmitEvt,

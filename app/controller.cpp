@@ -274,13 +274,9 @@ int Controller::serverDataHandle(uint8_t const * const rxBuf,
                 /* set current running command status */
                 reList = &pCurCmd->elem.statusList;
             }
-            /* set reponse state */
-            if (buf->type & PRO_ERR_MASK) {
-                reState = QHOST_SHIELDED;
-            }
-            else {
-                reState = QSUCCESS;
-            }
+            /* set error */
+            reState = buf->type & PRO_ERR_MASK;
+            qDebug("reState =  0x%02x", (uint8_t)reState);
             /* save reponse to status to list (command or request) */
             Request_saveStatusToList(INFLIGHT_HD, QT_PTC,
                     0, reState, buf->cmd, reList);
@@ -305,8 +301,10 @@ int Controller::serverDataHandle(uint8_t const * const rxBuf,
             }
         }
         else {
-            /* create new command and disptch commander */
-            handleServerCmd(rxBuf, rxLen);
+            if (!(buf->type & PRO_RESP_MASK)) {
+                /* create new command and disptch commander */
+                handleServerCmd(rxBuf, rxLen);
+            }
         }
     }
     /* return value */
@@ -370,19 +368,13 @@ void Controller::handleServerCmd(uint8_t const * const rxBuf,
     if (cmdFun != (TPSpeCmdFunc)0) {
         cmd = (TPCmdQueueNode)malloc(sizeof(TCmdQueueNode));
         if (cmd != (TPCmdQueueNode)0) {
-            cmd->elem.type = USER_CMD;
-            cmd->elem.user = SERVER_USER;
-            cmd->elem.execStatus = NO_START;
-            cmd->elem.id = getNextCmd();
-            /* request data length set */
-            cmd->elem.cmdBufLen = rxLen;
-            /* set command data to cmd buffer */
-            memcpy(cmd->elem.cmdBuf, rxBuf, rxLen);
-            /* set specific function */
-            cmd->elem.run = cmdFun;
-            qDebug("Qt Protocal(cmd = %d) will dispath to commander",
-                buf->cmd);
+            CmdQueue_elemInitial(&cmd->elem,
+                l_contoller.getNextCmd(), USER_CMD,
+                QT_USER, rxLen, rxBuf, cmdFun);
             CommandEvt e(cmd);
+            qDebug("Qt cmd Handler Dispatch "
+                    "Cmd(%d) to Commander",
+                buf->cmd);
             commander->dispatch(&e);
         }
     }
@@ -401,9 +393,7 @@ void Controller::tickQtInflight(void) {
     list_for_each_entry_safe(pos, n, &inflight[QT_INFLIGHT], list) {
         if (Inflight_timeout(pos)) {
             if (Inflight_retried(pos)) {
-                /* get self protocal cmd */
-                ProtocalQt_readCmd(pos->pBuf, 
-                    pos->dataLen, (int)4, &ptCmd);
+               ptCmd = ((TProtocalQt *)pos->pBuf)->cmd;
                 /* get some information before destroy */
                 wkCmdId = pos->cmdId;
                 notifyId = pos->cmdNotificationId;
@@ -411,7 +401,7 @@ void Controller::tickQtInflight(void) {
                 qDebug("[TIMEOUT %d, %d, %d, %d, %d]",
                     QT_INFLIGHT, pos->cmdSeqId,
                     pos->cmdId, pos->cmdNotificationId,
-                    ((TProtocalQt *)pos->pBuf)->cmd);
+                    ptCmd);
                 /* destroy */
                 Inflight_nodeDestroy(&pos);
                 /* match command id? */

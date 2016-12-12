@@ -27,7 +27,7 @@ static SystemSetDialog *l_sysSetDialog;
 ARCS::PortEvt SystemSetDialog::qtCltRdEvt(ARCS::PORTREADABLE_SIG,
     ARCS::QT_PORT,
     ARCS::READABLE);
-QString SystemSetDialog::tcpIp("192.168.0.154");
+QString SystemSetDialog::tcpIp("192.168.0.243");
 QString SystemSetDialog::tcpPort = "5002";
 QTcpSocket SystemSetDialog::tcpClient;
 uint8_t *SystemSetDialog::datagram;
