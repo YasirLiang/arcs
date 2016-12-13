@@ -145,6 +145,7 @@ QP::QState Transmitor::active(Transmitor * const me,
 {
     QP::QState status_;
     switch (e->sig) {
+#if 0        
         case TICK_1MS_SIG: {
             /* check for all ring buffer */
             for (int i = 0; i < EXTERN_PORT_NUM; ++i) {
@@ -154,12 +155,14 @@ QP::QState Transmitor::active(Transmitor * const me,
             status_ = QM_HANDLED();
             break;
         }
+#endif        
         case PORTREADABLE_SIG: {
             qDebug("[Transmitor::active recieve PORTREADABLE_SIG]");
             PortEvt const * const portEvt
                     = static_cast<PortEvt const * const>(e);
             if (portEvt->port == QT_PORT) {
                 me->port[QT_SV_EP]->dispatch(e);
+                charMsgNowPro(QT_SV_EP);
             }
             else {
                 /* error port input, do nothing */
@@ -208,12 +211,16 @@ QP::QState Transmitor::serving(Transmitor * const me,
 }
 /*$ Transmitor::serving_e().................................................*/
 QP::QState Transmitor::serving_e(Transmitor * const me) {
+#if 0
     me->m_timeEvt.postIn(me, (QP::QTimeEvtCtr)1);
+#endif
     return QM_ENTRY(&serving_s);
 }
 /*$ Transmitor::serving_x().................................................*/
 QP::QState Transmitor::serving_x(Transmitor * const me) {
+#if 0
     me->m_timeEvt.disarm();
+#endif
     return QM_EXIT(&serving_s);
 }
 /*$ Transmitor::qtCharMsgPro()..............................................*/
@@ -308,6 +315,97 @@ void Transmitor::charMsgPro(int port) {
     switch (port) {
         case QT_SV_EP: {
             qtCharMsgPro();
+            break;
+        }
+        default: {/* Error port */
+            break;
+        }
+    }
+}
+/*$ Transmitor::qtCharMsgNowPro()...........................................*/
+void Transmitor::qtCharMsgNowPro(void) {
+    static TProtocalQt l_msgPro;
+    TRingMsgPro *pRingPro;
+    uint8_t ch; /* char store */
+    uint16_t dataLen;
+    pRingPro = &ringMsgPro[QT_SV_EP];
+    /* get ring char in buffer */
+    while (RingBuffer_getChar(&ringBuf[QT_SV_EP], &ch)) {
+        userTimerStart(30, &pRingPro->itvTimer);
+        pRingPro->recvOver = (bool)0;
+        if ((pRingPro->msgLen == 0)
+              && (ch == PROTOCAL_QT_TYPE))
+        {
+            l_msgPro.head = PROTOCAL_QT_TYPE;
+            pRingPro->msgLen = 1;
+        }
+        else if (pRingPro->msgLen == 1) {
+            l_msgPro.type = ch;
+            pRingPro->msgLen = 2;
+        }
+        else if (pRingPro->msgLen == 2) {
+            /* '=' will clear  data stored last time, must be */
+            l_msgPro.seq = (((uint16_t)ch) & 0x00ff);
+            pRingPro->msgLen = 3;
+        }
+        else if (pRingPro->msgLen == 3) {
+            /* '|=' must be */
+            l_msgPro.seq |= ((((uint16_t)ch) << 8) & 0xff00);
+            pRingPro->msgLen = 4;
+        }
+        else if (pRingPro->msgLen == 4) {
+            l_msgPro.cmd = ch;
+            pRingPro->msgLen = 5;
+        }
+        else if (pRingPro->msgLen == 5) {
+            /* '=' will clear  data stored last time, must be */
+            l_msgPro.dataLen = ((uint16_t)ch) & 0x00ff;
+            pRingPro->msgLen = 6;
+        }
+        else if (pRingPro->msgLen == 6) {
+            l_msgPro.dataLen |= (((uint16_t)ch) << 8) & 0xff00;
+            if (l_msgPro.dataLen > PRO_QT_MAX) {
+                pRingPro->msgLen = 0;
+            }
+            else {/* Not out of rang s*/
+                pRingPro->msgLen = 7;
+                dataLen = 0;
+            }
+        }
+        else if (pRingPro->msgLen >= 7) {
+            if (dataLen < l_msgPro.dataLen) {
+                l_msgPro.dataBuf[dataLen] = ch;
+                pRingPro->msgLen++;
+                dataLen++;
+            }
+            else if (dataLen == l_msgPro.dataLen) {
+                if (ProtocalQt_checkCrc(&l_msgPro, ch) == 0) {
+                    /* post app data to controller */
+                    A0_Controller->POST(Q_NEW(TransmitEvt,
+                        QT_PORT, pRingPro->msgLen,
+                        (uint8_t *)&l_msgPro), &l_transmitor);
+                    pRingPro->msgLen = 0;
+                }
+            }
+            else {
+                pRingPro->msgLen = 0;
+            }
+        }
+        else {
+            /* never come this else */
+        }
+    }
+
+    if (userTimerTimeout(&pRingPro->itvTimer)) {
+        pRingPro->msgLen = 0;
+    }
+}
+
+/*$ Transmitor::charMsgNowPro().............................................*/
+void Transmitor::charMsgNowPro(int port) {
+    switch (port) {
+        case QT_SV_EP: {
+            qtCharMsgNowPro();
             break;
         }
         default: {/* Error port */

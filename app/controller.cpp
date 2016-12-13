@@ -23,6 +23,7 @@
 #include "usertimer.h"
 #include "inflight.h"
 #include "controller.h"
+#include "mainwidget.h"
 
 namespace ARCS {
 
@@ -280,6 +281,10 @@ int Controller::serverDataHandle(uint8_t const * const rxBuf,
             /* save reponse to status to list (command or request) */
             Request_saveStatusToList(INFLIGHT_HD, QT_PTC,
                     0, reState, buf->cmd, reList);
+            if (reState > 0) {/* error reponse */
+                MainSurface::instance()->displayArcsErr(buf->cmd,
+                    reState, 0);
+            }
         }
         /* look for each inflight list, if no such inflight node,
              send request signal to */
@@ -427,6 +432,8 @@ void Controller::tickQtInflight(void) {
                     /* save reponse to status to list (command or request) */
                     Request_saveStatusToList(INFLIGHT_HD, QT_PTC,
                             0, QTIMEOUT, ptCmd, reList);
+                    MainSurface::instance()->displayArcsErr(ptCmd,
+                        QTIMEOUT, 1); /**/
                 }
                 /* look for each inflight list, if no such inflight node,
                      send request signal to */

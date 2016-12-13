@@ -48,6 +48,7 @@ public:
     uint64_t loadUpdateData(uint8_t * const buf, uint64_t reqSize);
     void updateBarProccess(void);
     bool isUpdateCancel(void);
+    void displayArcsErr(uint8_t cmd, uint8_t err, bool timeOut);
 private:
     bool uiLocked; /*it's setted to one until user's request is finished. */
     uint32_t requstId;

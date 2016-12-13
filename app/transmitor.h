@@ -55,6 +55,8 @@ private:
 #endif
     static void qtCharMsgPro(void);
     static void charMsgPro(int port);
+    static void qtCharMsgNowPro(void);
+    static void charMsgNowPro(int port);
     bool initialRecvBufList(void);
 public:
     Transmitor();

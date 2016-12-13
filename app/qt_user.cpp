@@ -87,14 +87,33 @@ void* QtCmd_queryId(struct TCmdQElem *pElem) {
         }
     }
     else {
+        char const *pS = LBSTATUS;
+        char const *pR = LBRESULT;
+        bool ok = (bool)0;
+        TUptc ptc;
+        /* \ check first command run status */
+        ptc.subType = 0;
+        ptc.type = QT_PTC;
+        ok = RequestList_statusCorrect(&pElem->statusList,
+            INFLIGHT_HD, ptc,
+            QT_QUEUE_ID, ARCS::QSUCCESS);
+        if (ok) {
+            pS = LBSTATUS_FINISH;
+            pR = LBRESULT_SCS;
+        }
+        else {
+            pS = LBSTATUS_FINISH;
+            pR = LBRESULT_FAILED;
+        }
+
         /* set query command running successfully */
         pElem->execStatus = EXEC_SUCCESS;
         qDebug("[Qt User %d Cmd finish]",
                     cmd);
         /* set status to Finish */
-        MainSurface::instance()->setStatus(LBSTATUS_FINISH);
+        MainSurface::instance()->setStatus(pS);
         /* set result to success */
-        MainSurface::instance()->setResult(LBRESULT_SCS);
+        MainSurface::instance()->setResult(pR);
         /* unlock ui */
         MainSurface::instance()->unLockUi();
     }
@@ -157,12 +176,30 @@ void* QtCmd_switchMatrix(struct TCmdQElem *pElem) {
         }
     }
     else {
+        char const *pS = LBSTATUS;
+        char const *pR = LBRESULT;
+        bool ok = (bool)0;
+        TUptc ptc;
+        /* \ check first command run status */
+        ptc.subType = 0;
+        ptc.type = QT_PTC;
+        ok = RequestList_statusCorrect(&pElem->statusList,
+            INFLIGHT_HD, ptc,
+            QT_SWITCH_MATRIX, ARCS::QSUCCESS);
+        if (ok) {
+            pS = LBSTATUS_FINISH;
+            pR = LBRESULT_SCS;
+        }
+        else {
+            pS = LBSTATUS_FINISH;
+            pR = LBRESULT_FAILED;
+        }
         /* set query command running successfully */
         pElem->execStatus = EXEC_SUCCESS;
         /* set status to Finish */
-        MainSurface::instance()->setStatus(LBSTATUS_FINISH);
+        MainSurface::instance()->setStatus(pS);
         /* set result to success */
-        MainSurface::instance()->setResult(LBRESULT_SCS);
+        MainSurface::instance()->setResult(pR);
         /* unlock ui */
         MainSurface::instance()->unLockUi();
     }
@@ -225,12 +262,30 @@ void* QtCmd_optTerminal(struct TCmdQElem *pElem) {
         }
     }
     else {
+        char const *pS = LBSTATUS;
+        char const *pR = LBRESULT;
+        bool ok = (bool)0;
+        TUptc ptc;
+        /* \ check first command run status */
+        ptc.subType = 0;
+        ptc.type = QT_PTC;
+        ok = RequestList_statusCorrect(&pElem->statusList,
+            INFLIGHT_HD, ptc,
+            QT_OPT_TMNL, ARCS::QSUCCESS);
+        if (ok) {
+            pS = LBSTATUS_FINISH;
+            pR = LBRESULT_SCS;
+        }
+        else {
+            pS = LBSTATUS_FINISH;
+            pR = LBRESULT_FAILED;
+        }
         /* set query command running successfully */
         pElem->execStatus = EXEC_SUCCESS;
         /* set status to Finish */
-        MainSurface::instance()->setStatus(LBSTATUS_FINISH);
+        MainSurface::instance()->setStatus(pS);
         /* set result to success */
-        MainSurface::instance()->setResult(LBRESULT_SCS);
+        MainSurface::instance()->setResult(pR);
         /* unlock ui */
         MainSurface::instance()->unLockUi();
     }
@@ -585,13 +640,30 @@ void* QtCmd_cameraControl(struct TCmdQElem *pElem) {
         }
     }
     else {
-        /* get */
+        char const *pS = LBSTATUS;
+        char const *pR = LBRESULT;
+        bool ok = (bool)0;
+        TUptc ptc;
+        /* \ check first command run status */
+        ptc.subType = 0;
+        ptc.type = QT_PTC;
+        ok = RequestList_statusCorrect(&pElem->statusList,
+            INFLIGHT_HD, ptc,
+            QT_CMR_CTL, ARCS::QSUCCESS);
+        if (ok) {
+            pS = LBSTATUS_FINISH;
+            pR = LBRESULT_SCS;
+        }
+        else {
+            pS = LBSTATUS_FINISH;
+            pR = LBRESULT_FAILED;
+        }
         /* set query command running successfully */
         pElem->execStatus = EXEC_SUCCESS;
         /* set status to Finish */
-        MainSurface::instance()->setStatus(LBSTATUS_FINISH);
+        MainSurface::instance()->setStatus(pS);
         /* set result to success */
-        MainSurface::instance()->setResult(LBRESULT_SCS);          
+        MainSurface::instance()->setResult(pR);          
         /* unlock ui */
         MainSurface::instance()->unLockUi();
     }

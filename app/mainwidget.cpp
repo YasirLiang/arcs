@@ -23,6 +23,7 @@
 #include "user.h"
 #include "systemset.h"
 #include "mainwidget.h"
+#include "protocal_qt.h"
 /*$ Class Local decralation-------------------------------------------------*/
 ARCS::RequestEvt MainSurface::e(ARCS::REQUEST_SIG,
                     0U,
@@ -32,6 +33,44 @@ ARCS::RequestEvt MainSurface::e(ARCS::REQUEST_SIG,
                     QT_REQUEST);
 /* Local mainsurface instance-----------------------------------------------*/
 static MainSurface *l_instance;
+
+/*$ Global varailable-------------------------------------------------------*/
+struct {
+    uint8_t err;
+    const char *errorStr;
+}ArcsProErrStr[MAX_CMD_NUM][MAX_ERR_CODE] = {
+    {
+        {QR_SUCCESS, "QR_SUCCESS"},
+        {NO_ID, "NO_ID"},
+        {HOST_HANDING, "HOST_HANDING"},
+        {MAX_QR_ER_PUB, "UNKOWN"}
+    },
+    {
+        {SM_SUCCESS, "SM_SUCCESS"},
+        {MAX_SM_ER_PUB, "UNKOWN"}
+    },
+    {
+        {OPT_SUCCESS, "OPT_SUCCESS"},
+        {NO_SIGN, "NO_SIGN"},
+        {NO_SUCH_ID, "NO_SUCH_ID"},
+        {PRESET_STATE, "PRESET_STATE"},
+        {MAX_OPT_ER_PUB, "UNKOWN"}
+    },
+    {
+        {SSET_SUCCESS, "SSET_SUCCESS"},
+        {UPDATE_WRITE_ERR, "UPDATE_WRITE_ERR"},
+        {DATA_FORMAT_ERR, "DATA_FORMAT_ERR"},
+        {START_SYS_ERR, "START_SYS_ERR"},
+        {STOP_SYS_ERR, "STOP_SYS_ERR"},
+        {NO_SPACE, "NO_SPACE"},
+        {TRANSMIT_ERR, "TRANSMIT_ERR"},
+        {MAX_SYSSET_ER_PUB, "UNKOWN"}
+    },
+    {
+        {CMR_CTL_SUCCESS, "CMR_CTL_SUCCESS"},
+        {MAX_CMRCTL_ER_PUB, "UNKOWN"}
+    }
+};
 /*MainSurface().............................................................*/
 MainSurface::MainSurface(QWidget *parent)
     : QWidget(parent)
@@ -272,6 +311,41 @@ void MainSurface::updateBarProccess(void) {
 bool MainSurface::isUpdateCancel(void) {
 /* get cancel flag to true */ 
     return cancelUpdate;
+}
+/*error display().......................................................*/
+void MainSurface::displayArcsErr(uint8_t cmd, uint8_t err, bool timeOut) {
+/* cmd must little max arcs protocal command */
+    QString str;
+    if (!timeOut) {
+        if ((cmd > MAX_CMD_NUM)
+             || (err >= MAX_ERR_CODE))
+        {/* error arcs error information */
+            return;
+        }
+        
+        qDebug("cmd = 0x%x, err = 0x%x", cmd, err);
+        if (err != 0) { /* no success */
+            str.sprintf("Cmd = %d, status = %s",
+                cmd, ArcsProErrStr[cmd-1][err].errorStr);
+            QMessageBox::critical(this, "Arcs Cmd Operation Failed",
+                str, QMessageBox::Ok,
+                0, 0);
+        }
+        else {
+            str.sprintf("Cmd = %d, status = %s",
+                cmd, ArcsProErrStr[cmd-1][err].errorStr);
+            QMessageBox::information(this, "Arcs Cmd Operation Success",
+                str, QMessageBox::Ok,
+                0, 0);
+        }
+    }
+    else {
+        str.sprintf("Cmd = %d, status = %s",
+                cmd, "TIMEOUT");
+        QMessageBox::critical(this, "Arcs Cmd Operation Failed",
+                str, QMessageBox::Ok,
+                0, 0);
+    }
 }
 /*add().....................................................................*/
 void MainSurface::add(void) {
@@ -920,8 +994,8 @@ void MainSurface::optTypeComboBoxValChanged(int) {
         optType = TERMINAL_SIGN;
         /* disable */
         optComboBox->setEnabled(0); /* disabled */
-        pausePushBtn->setEnabled(1); /* enabled */
-        resumePushBtn->setEnabled(1); /* enabled */
+        pausePushBtn->setEnabled(0); /* enabled */
+        resumePushBtn->setEnabled(0); /* enabled */
     }
     else if (index == 2) { /* vote */
         optType = TERMINAL_VOTE;
