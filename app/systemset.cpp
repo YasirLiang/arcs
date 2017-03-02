@@ -27,7 +27,7 @@ static SystemSetDialog *l_sysSetDialog;
 ARCS::PortEvt SystemSetDialog::qtCltRdEvt(ARCS::PORTREADABLE_SIG,
     ARCS::QT_PORT,
     ARCS::READABLE);
-QString SystemSetDialog::tcpIp("192.168.0.243");
+QString SystemSetDialog::tcpIp("192.168.0.194");
 QString SystemSetDialog::tcpPort = "5002";
 QTcpSocket SystemSetDialog::tcpClient;
 uint8_t *SystemSetDialog::datagram;
@@ -177,13 +177,14 @@ void SystemSetDialog::setTcpSocket(char const * const pip,
     if (!tcpPort.isEmpty()) {
         uport = (int32_t)tcpPort.toInt(&ok, 10);
         qDebug("tcpPort(%d) changed \n", uport);
+        
+        /* will connect to server */
+        qDebug("will connect to server[%s-%d]",
+                    pIp, uport);
+        tcpClient.connectToHost(tcpIp, uport);
+        avail = 0;
+        datagram = (uint8_t *)0;
     }
-    /* will connect to server */
-    qDebug("will connect to server[%s-%d]",
-        pIp, uport);
-    tcpClient.connectToHost(tcpIp, uport);
-    avail = 0;
-    datagram = (uint8_t *)0;
 }
 /*$ SystemSetDialog::setTcpSocket().........................................*/
 void SystemSetDialog::setTcpSocket(void)
@@ -196,13 +197,14 @@ void SystemSetDialog::setTcpSocket(void)
     if (!tcpPort.isEmpty()) {
         uport = (int32_t)tcpPort.toInt(&ok, 10);
         qDebug("tcpPort(%d) changed \n", uport);
+
+        /* will connect to server */
+        qDebug("will connect to server[%s-%d](none parameter )",
+            pIp, uport);
+        tcpClient.connectToHost(tcpIp, uport);
+        avail = 0;
+        datagram = (uint8_t *)0;
     }
-    /* will connect to server */
-    qDebug("will connect to server[%s-%d](none parameter )",
-        pIp, uport);
-    tcpClient.connectToHost(tcpIp, uport);
-    avail = 0;
-    datagram = (uint8_t *)0;
 }
 /*$ specific Extern port init function......................................*/
 void SystemSetDialog::init_s(void) {

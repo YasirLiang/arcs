@@ -208,6 +208,8 @@ namespace ARCS {
 #define INFLIGHT_PSM /* inflight port state machine */
 #endif /* MSG_QUEUE_PSM */
 
+#define TICKS_PER_MS (BSP_TICKS_PER_SEC/1000U)
+
 extern QP::GuiQMActive *A0_Controller;
 extern QP::QMActive *A0_Transmitor;
 

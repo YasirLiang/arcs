@@ -144,24 +144,23 @@ QP::QState Transmitor::active(Transmitor * const me,
     QP::QEvt const * const e)
 {
     QP::QState status_;
-    switch (e->sig) {
-#if 0        
-        case TICK_1MS_SIG: {
-            /* check for all ring buffer */
-            for (int i = 0; i < EXTERN_PORT_NUM; ++i) {
-                charMsgPro(i);
-            }
-            me->m_timeEvt.postIn(me, (QP::QTimeEvtCtr)1);
-            status_ = QM_HANDLED();
-            break;
-        }
-#endif        
+    TRingMsgPro *pRingPro;
+    switch (e->sig) {   
         case PORTREADABLE_SIG: {
-            qDebug("[Transmitor::active recieve PORTREADABLE_SIG]");
-            PortEvt const * const portEvt
-                    = static_cast<PortEvt const * const>(e);
+            PortEvt const * const portEvt =
+                static_cast<PortEvt const * const>(e);            
             if (portEvt->port == QT_PORT) {
+                pRingPro = &ringMsgPro[QT_SV_EP];
+                /* check if itvtimer whether timeout, if timeout
+                      abandon packet */
+                if ((pRingPro->msgLen != 0)
+                       && (userTimerTimeout(&pRingPro->itvTimer)))
+                {
+                    pRingPro->msgLen = 0;
+                }
+                /* dispatch port readable Event for recieve message */
                 me->port[QT_SV_EP]->dispatch(e);
+                /* proccess char message */
                 charMsgNowPro(QT_SV_EP);
             }
             else {
@@ -211,16 +210,14 @@ QP::QState Transmitor::serving(Transmitor * const me,
 }
 /*$ Transmitor::serving_e().................................................*/
 QP::QState Transmitor::serving_e(Transmitor * const me) {
-#if 0
-    me->m_timeEvt.postIn(me, (QP::QTimeEvtCtr)1);
-#endif
+    /* avoid warning */
+    (void)me;
     return QM_ENTRY(&serving_s);
 }
 /*$ Transmitor::serving_x().................................................*/
 QP::QState Transmitor::serving_x(Transmitor * const me) {
-#if 0
-    me->m_timeEvt.disarm();
-#endif
+    /* avoid warning */
+    (void)me;
     return QM_EXIT(&serving_s);
 }
 /*$ Transmitor::qtCharMsgPro()..............................................*/
@@ -331,7 +328,7 @@ void Transmitor::qtCharMsgNowPro(void) {
     pRingPro = &ringMsgPro[QT_SV_EP];
     /* get ring char in buffer */
     while (RingBuffer_getChar(&ringBuf[QT_SV_EP], &ch)) {
-        userTimerStart(30, &pRingPro->itvTimer);
+        userTimerStart(500, &pRingPro->itvTimer);
         pRingPro->recvOver = (bool)0;
         if ((pRingPro->msgLen == 0)
               && (ch == PROTOCAL_QT_TYPE))
@@ -394,10 +391,6 @@ void Transmitor::qtCharMsgNowPro(void) {
         else {
             /* never come this else */
         }
-    }
-
-    if (userTimerTimeout(&pRingPro->itvTimer)) {
-        pRingPro->msgLen = 0;
     }
 }
 

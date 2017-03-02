@@ -133,7 +133,7 @@ QP::QState Controller::serving(Controller * const me,
     TPCmdQueueNode cmd;
     switch (e->sig) {
         case TICK_1MS_SIG: {
-            me->m_timeEvt.postIn(me, (QP::QTimeEvtCtr)1);
+            me->m_timeEvt.postIn(me, (QP::QTimeEvtCtr)TICKS_PER_MS);
             status_ = QM_SUPER();
             break;
         }
@@ -212,7 +212,7 @@ QP::QState Controller::serving(Controller * const me,
 /*$ Controller::serving_e()................................................*/
 QP::QState Controller::serving_e(Controller * const me) {
     qDebug("Controller serving entry");
-    me->m_timeEvt.postIn(me, (QP::QTimeEvtCtr)1);
+    me->m_timeEvt.postIn(me, (QP::QTimeEvtCtr)TICKS_PER_MS);
     return QM_ENTRY(&serving_s);
 }
 /*$ Controller::serving_x().................................................*/
@@ -433,7 +433,7 @@ void Controller::tickQtInflight(void) {
                     Request_saveStatusToList(INFLIGHT_HD, QT_PTC,
                             0, QTIMEOUT, ptCmd, reList);
                     MainSurface::instance()->displayArcsErr(ptCmd,
-                        QTIMEOUT, 1); /**/
+                        QTIMEOUT, (bool)1); /*\ */
                 }
                 /* look for each inflight list, if no such inflight node,
                      send request signal to */

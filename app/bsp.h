@@ -20,10 +20,10 @@
 #ifndef bsp_h
 #define bsp_h
 
-#define BSP_TICKS_PER_SEC   1000000000U
+#define BSP_TICKS_PER_SEC   1000U
 
 void BSP_init(void);
 void BSP_terminate(int);
 
-#endif // bsp_h
+#endif /* bsp_h */
 

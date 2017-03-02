@@ -663,7 +663,7 @@ void* QtCmd_cameraControl(struct TCmdQElem *pElem) {
         /* set status to Finish */
         MainSurface::instance()->setStatus(pS);
         /* set result to success */
-        MainSurface::instance()->setResult(pR);          
+        MainSurface::instance()->setResult(pR);
         /* unlock ui */
         MainSurface::instance()->unLockUi();
     }
@@ -715,7 +715,7 @@ void* ServerCmd_queryId(struct TCmdQElem *pElem) {
         }
         /* parser data */
         if (pBuf->type & PRO_REPORT_TYPE) {
-        /* only proccess report type */
+            /* only proccess report type */
             dataLen = pBuf->dataLen;
             if (!(dataLen % sizeof(TProtocalQtQueryData))) {
                 tableWidget = MainSurface::instance()->qresultTableWidget;
