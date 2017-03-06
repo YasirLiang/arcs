@@ -95,6 +95,15 @@ FORMS += login.ui \
     mainwidget.ui \
     systemset.ui
 
+RESOURCES += \
+    res/arcs.qrc
+
+DISTFILES += \
+    pro.rc
+
+RC_FILE = \
+    pro.rc
+
 ##############################################################################
 # NOTE:
 # This project demonstrats how to build the QP/C++ framework from sources,
@@ -138,3 +147,4 @@ CONFIG(debug, debug|release) {
     # Release build configuartion
     DEFINES += NDEBUG
 }
+

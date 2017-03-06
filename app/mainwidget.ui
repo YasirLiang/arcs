@@ -22,6 +22,10 @@
   <property name="windowTitle">
    <string>Avdecc reception Testing System</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="res/arcs.qrc">
+    <normaloff>:/new/prefix1/conference.ico</normaloff>:/new/prefix1/conference.ico</iconset>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_17">
@@ -776,6 +780,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="res/arcs.qrc"/>
+ </resources>
  <connections/>
 </ui>
