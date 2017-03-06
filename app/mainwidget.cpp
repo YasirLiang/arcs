@@ -325,11 +325,18 @@ void MainSurface::displayArcsErr(uint8_t cmd, uint8_t err, bool timeOut) {
         
         qDebug("cmd = 0x%x, err = 0x%x", cmd, err);
         if (err != 0) { /* no success */
-            str.sprintf("Cmd = %d, status = %s",
+            if ((cmd == QT_QUEUE_ID)
+                  && (err == HOST_HANDING)) {
+                qDebug("Cmd = %d, status = %s",
                 cmd, ArcsProErrStr[cmd-1][err].errorStr);
-            QMessageBox::critical(this, "Arcs Cmd Operation Failed",
-                str, QMessageBox::Ok,
-                0, 0);
+            }
+            else {
+                str.sprintf("Cmd = %d, status = %s",
+                    cmd, ArcsProErrStr[cmd-1][err].errorStr);
+                QMessageBox::critical(this, "Arcs Cmd Operation Failed",
+                    str, QMessageBox::Ok,
+                    0, 0);
+            }
         }
         else {
             str.sprintf("Cmd = %d, status = %s",
