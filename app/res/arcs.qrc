@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/new/prefix1">
-        <file>QQ图片20161017145349.jpg</file>
         <file>conference.ico</file>
     </qresource>
 </RCC>
